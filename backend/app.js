@@ -39,6 +39,7 @@ const itemRoute = require('./routes/itemRoute');
 const galleryRoute = require('./routes/galleryRoute');
 const orderRoutes = require('./routes/orderRoutes');
 const sellerRoute = require('./routes/sellerRoutes');
+const topBannerRoute = require('./routes/topBannerRoutes')
 
 // firebase initialization
 // admin.initializeApp({
@@ -104,6 +105,7 @@ app.use('/api',itemRoute);
 app.use('/api',galleryRoute);
 app.use('/api', orderRoutes);
 app.use('/api', sellerRoute);
+app.use('/api', topBannerRoute);
 
 
 
