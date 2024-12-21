@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
-const { createPostProduct, showProduct, showSingleProduct, deleteProduct, updateProduct, addComment, addLike, removeLike, showPaginatedProducts } = require('../controllers/productController');
+const { createPostProduct, showProduct, showSingleProduct, deleteProduct, updateProduct, addComment, addLike, removeLike, showPaginatedProducts, getProductsByCategory } = require('../controllers/productController');
 
 //product routes
 router.post('/product/create', isAuthenticated, isAdmin, createPostProduct);
@@ -11,6 +11,7 @@ router.get('/products/show', showProduct);
 router.get('/products/paginated', showPaginatedProducts); // <-- Pagination route
 
 router.get('/product/:id', showSingleProduct);
+router.get('/category/:category', getProductsByCategory);
 
 router.delete('/delete/product/:id', isAuthenticated, isAdmin, deleteProduct);
 

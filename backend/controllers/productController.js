@@ -54,9 +54,12 @@ exports.createPostProduct = async (req, res, next) => {
     title,
     content,
     price,
+    quantity,
     brand,
-    supplier, // Ensure supplier is included in the request body
+    supplier, 
+    categories,
     image,
+    
     likes,
     comments,
   } = req.body;
@@ -80,9 +83,11 @@ exports.createPostProduct = async (req, res, next) => {
       title,
       content,
       price,
+      quantity,
       brand,
       postedBy: req.user._id, // Assuming the user is logged in and their ID is available
       supplier, // Using the supplier ID provided in the request
+      categories,
       image: {
         public_id: result.public_id,
         url: result.secure_url,
@@ -161,6 +166,7 @@ exports.updateProduct = async (req, res, next) => {
       title,
       content,
       price,
+      quantity,
       brand,
       
       image,
@@ -172,6 +178,7 @@ exports.updateProduct = async (req, res, next) => {
       title: title || currentProduct.title,
       content: content || currentProduct.content,
       price: price || currentProduct.price,
+      quantity: quantity || currentProduct.quantity,
       brand: brand || currentProduct.brand,
       
       image: image || currentProduct.image,
@@ -309,6 +316,32 @@ exports.showPaginatedProducts = async (req, res, next) => {
     next(new ErrorResponse("Failed to load products", 500));
   }
 };
+
+
+
+// Filter products by category
+exports.getProductsByCategory = async (req, res, next) => {
+  const category = req.params.category; // Get category from URL
+
+  try {
+    const products = await Product.find({ categories: category })
+      .populate("postedBy", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
+
 
 
 

@@ -17,6 +17,10 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: [true, "price is required"],
         },
+        quantity: {
+            type: String,
+            required: [true, "quantity is required"],
+        },
         
         brand: {
             type: String,
@@ -32,6 +36,15 @@ const productSchema = new mongoose.Schema(
             ref: 'Supplier',
             required: [true, 'Supplier is required'],
           },
+          categories: [
+            {
+              type: String,
+              enum: ['All', 'Top Brands', 'New Arrival', 'Unstitched'], // Define categories here
+              required: [true, "Category is required"],
+            },
+          ],
+
+          
         image: {
             url: String,
             public_id: String,
