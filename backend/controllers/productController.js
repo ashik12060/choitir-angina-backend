@@ -2,8 +2,52 @@ const cloudinary = require("../utils/cloudinary");
 const Product = require("../models/productModel");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../app");
+const Supplier = require('../models/SupplierModel');
 
 
+//create product
+// exports.createPostProduct = async (req, res, next) => {
+//   const {
+//     title,
+//     content,
+//     price,
+//     brand,
+//     postedBy,
+//     image,
+//     likes,
+//     comments,
+//   } = req.body;
+
+//   try {
+//     // cloudinary setup
+//     const result = await cloudinary.uploader.upload(image, {
+//       folder: "products",
+//       width: 1200,
+//       crop: "scale",
+//     });
+
+//     const product = await Product.create({
+//       title,
+//       content,
+//       price,
+//       brand,
+      
+//       postedBy: req.user._id,
+//       image: {
+//         public_id: result.public_id,
+//         url: result.secure_url,
+//       },
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     next(error);
+//   }
+// };
 //create product
 exports.createPostProduct = async (req, res, next) => {
   const {
@@ -11,13 +55,19 @@ exports.createPostProduct = async (req, res, next) => {
     content,
     price,
     brand,
-    postedBy,
+    supplier, // Ensure supplier is included in the request body
     image,
     likes,
     comments,
   } = req.body;
 
   try {
+    // Check if the supplier exists in the database
+    const supplierExists = await Supplier.findById(supplier);
+    if (!supplierExists) {
+      return res.status(400).json({ message: 'Supplier does not exist' });
+    }
+
     // cloudinary setup
     const result = await cloudinary.uploader.upload(image, {
       folder: "products",
@@ -25,13 +75,14 @@ exports.createPostProduct = async (req, res, next) => {
       crop: "scale",
     });
 
+    // Create the product
     const product = await Product.create({
       title,
       content,
       price,
       brand,
-      
-      postedBy: req.user._id,
+      postedBy: req.user._id, // Assuming the user is logged in and their ID is available
+      supplier, // Using the supplier ID provided in the request
       image: {
         public_id: result.public_id,
         url: result.secure_url,
@@ -47,6 +98,7 @@ exports.createPostProduct = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // single product
 exports.showProduct = async (req, res, next) => {
@@ -257,3 +309,147 @@ exports.showPaginatedProducts = async (req, res, next) => {
     next(new ErrorResponse("Failed to load products", 500));
   }
 };
+
+
+
+// const cloudinary = require("../utils/cloudinary");
+// const Product = require("../models/productModel");
+// const Supplier = require("../models/SupplierModel"); // Import Supplier model
+// const ErrorResponse = require("../utils/errorResponse");
+// const main = require("../app");
+
+// // Create product
+// exports.createPostProduct = async (req, res, next) => {
+//   const { title, content, price, brand, supplier, image } = req.body;
+
+//   try {
+//     // Validate supplier ID
+//     const existingSupplier = await Supplier.findById(supplier);
+//     if (!existingSupplier) {
+//       return next(new ErrorResponse("Supplier not found", 404));
+//     }
+
+//     // Cloudinary image upload
+//     const result = await cloudinary.uploader.upload(image, {
+//       folder: "products",
+//       width: 1200,
+//       crop: "scale",
+//     });
+
+//     const product = await Product.create({
+//       title,
+//       content,
+//       price,
+//       brand,
+//       supplier, // Save supplier ID reference
+//       postedBy: req.user._id,
+//       image: {
+//         public_id: result.public_id,
+//         url: result.secure_url,
+//       },
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     next(error);
+//   }
+// };
+
+// // Get all products
+// exports.showProduct = async (req, res, next) => {
+//   try {
+//     const products = await Product.find()
+//       .sort({ createdAt: -1 })
+//       .populate("postedBy", "name")
+//       .populate("supplier", "name phone email address"); // Populate supplier info
+
+//     res.status(201).json({
+//       success: true,
+//       products,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// // Get single product
+// exports.showSingleProduct = async (req, res, next) => {
+//   try {
+//     const product = await Product.findById(req.params.id)
+//       .populate("comments.postedBy", "name")
+//       .populate("supplier", "name phone email address"); // Populate supplier info
+
+//     if (!product) {
+//       return next(new ErrorResponse("Product not found", 404));
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// // Update product
+// exports.updateProduct = async (req, res, next) => {
+//   try {
+//     const { title, content, price, brand, supplier, image } = req.body;
+//     const currentProduct = await Product.findById(req.params.id);
+
+//     if (!currentProduct) {
+//       return next(new ErrorResponse("Product not found", 404));
+//     }
+
+//     // Validate supplier ID if provided
+//     if (supplier) {
+//       const existingSupplier = await Supplier.findById(supplier);
+//       if (!existingSupplier) {
+//         return next(new ErrorResponse("Supplier not found", 404));
+//       }
+//     }
+
+//     const data = {
+//       title: title || currentProduct.title,
+//       content: content || currentProduct.content,
+//       price: price || currentProduct.price,
+//       brand: brand || currentProduct.brand,
+//       supplier: supplier || currentProduct.supplier,
+//     };
+
+//     // Modify product image conditionally
+//     if (image && image !== "") {
+//       const ImgId = currentProduct.image.public_id;
+//       if (ImgId) {
+//         await cloudinary.uploader.destroy(ImgId);
+//       }
+
+//       const newImage = await cloudinary.uploader.upload(image, {
+//         folder: "products",
+//         width: 1200,
+//         crop: "scale",
+//       });
+
+//       data.image = {
+//         public_id: newImage.public_id,
+//         url: newImage.secure_url,
+//       };
+//     }
+
+//     const productUpdate = await Product.findByIdAndUpdate(req.params.id, data, {
+//       new: true,
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       productUpdate,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };

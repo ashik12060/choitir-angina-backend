@@ -27,6 +27,11 @@ const productSchema = new mongoose.Schema(
             type: ObjectId,
             ref: "User",
         },
+        supplier: {
+            type: ObjectId,
+            ref: 'Supplier',
+            required: [true, 'Supplier is required'],
+          },
         image: {
             url: String,
             public_id: String,
