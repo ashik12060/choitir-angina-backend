@@ -3,22 +3,34 @@ const Product = require("../models/productModel");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../app");
 const Supplier = require('../models/SupplierModel');
+const bwipjs = require('bwip-js'); // Import barcode library
+const mongoose = require('mongoose');  // Add this line to import mongoose
 
 
 //create product
+
 // exports.createPostProduct = async (req, res, next) => {
 //   const {
 //     title,
 //     content,
 //     price,
+//     quantity,
 //     brand,
-//     postedBy,
+//     supplier, 
+//     categories,
 //     image,
+    
 //     likes,
 //     comments,
 //   } = req.body;
 
 //   try {
+//     // Check if the supplier exists in the database
+//     const supplierExists = await Supplier.findById(supplier);
+//     if (!supplierExists) {
+//       return res.status(400).json({ message: 'Supplier does not exist' });
+//     }
+
 //     // cloudinary setup
 //     const result = await cloudinary.uploader.upload(image, {
 //       folder: "products",
@@ -26,13 +38,16 @@ const Supplier = require('../models/SupplierModel');
 //       crop: "scale",
 //     });
 
+//     // Create the product
 //     const product = await Product.create({
 //       title,
 //       content,
 //       price,
+//       quantity,
 //       brand,
-      
-//       postedBy: req.user._id,
+//       postedBy: req.user._id, // Assuming the user is logged in and their ID is available
+//       supplier, // Using the supplier ID provided in the request
+//       categories,
 //       image: {
 //         public_id: result.public_id,
 //         url: result.secure_url,
@@ -48,7 +63,8 @@ const Supplier = require('../models/SupplierModel');
 //     next(error);
 //   }
 // };
-//create product
+
+
 exports.createPostProduct = async (req, res, next) => {
   const {
     title,
@@ -56,42 +72,54 @@ exports.createPostProduct = async (req, res, next) => {
     price,
     quantity,
     brand,
-    supplier, 
+    supplier,
     categories,
     image,
-    
-    likes,
-    comments,
   } = req.body;
 
   try {
-    // Check if the supplier exists in the database
+    // Check if the supplier exists
     const supplierExists = await Supplier.findById(supplier);
     if (!supplierExists) {
       return res.status(400).json({ message: 'Supplier does not exist' });
     }
 
-    // cloudinary setup
+    // Upload image to Cloudinary
     const result = await cloudinary.uploader.upload(image, {
-      folder: "products",
+      folder: 'products',
       width: 1200,
-      crop: "scale",
+      crop: 'scale',
     });
 
-    // Create the product
+    // Generate barcode based on unique product ID
+    const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
+    const barcodeBuffer = await bwipjs.toBuffer({
+      bcid: 'code128',       // Barcode type
+      text: barcodeData.toString(), // Text to encode
+      scale: 3,              // 3x scaling factor
+      height: 10,            // Bar height, in mm
+      includetext: true,     // Show human-readable text
+      textxalign: 'center',  // Align text to center
+    });
+
+    // Convert barcode to base64 string
+    const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString('base64')}`;
+
+    // Create the product with the generated barcode
     const product = await Product.create({
       title,
       content,
       price,
       quantity,
       brand,
-      postedBy: req.user._id, // Assuming the user is logged in and their ID is available
-      supplier, // Using the supplier ID provided in the request
+      postedBy: req.user._id,
+      supplier,
       categories,
       image: {
         public_id: result.public_id,
         url: result.secure_url,
       },
+      barcode: barcodeBase64, // Save barcode in the database
     });
 
     res.status(201).json({
@@ -99,7 +127,7 @@ exports.createPostProduct = async (req, res, next) => {
       product,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     next(error);
   }
 };

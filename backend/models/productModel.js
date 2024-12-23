@@ -44,6 +44,10 @@ const productSchema = new mongoose.Schema(
             },
           ],
 
+          barcode: {
+            type: String, // This will store the barcode image as a base64 string or URL
+          },
+
           
         image: {
             url: String,
