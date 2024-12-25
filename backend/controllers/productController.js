@@ -8,7 +8,7 @@ const mongoose = require('mongoose');  // Add this line to import mongoose
 
 
 //create product
-
+// main createpostproduct
 // exports.createPostProduct = async (req, res, next) => {
 //   const {
 //     title,
@@ -16,42 +16,54 @@ const mongoose = require('mongoose');  // Add this line to import mongoose
 //     price,
 //     quantity,
 //     brand,
-//     supplier, 
+//     supplier,
 //     categories,
 //     image,
-    
-//     likes,
-//     comments,
 //   } = req.body;
 
 //   try {
-//     // Check if the supplier exists in the database
+//     // Check if the supplier exists
 //     const supplierExists = await Supplier.findById(supplier);
 //     if (!supplierExists) {
 //       return res.status(400).json({ message: 'Supplier does not exist' });
 //     }
 
-//     // cloudinary setup
+//     // Upload image to Cloudinary
 //     const result = await cloudinary.uploader.upload(image, {
-//       folder: "products",
+//       folder: 'products',
 //       width: 1200,
-//       crop: "scale",
+//       crop: 'scale',
 //     });
 
-//     // Create the product
+//     // Generate barcode based on unique product ID
+//     const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
+//     const barcodeBuffer = await bwipjs.toBuffer({
+//       bcid: 'code128',       // Barcode type
+//       text: barcodeData.toString(), // Text to encode
+//       scale: 3,              // 3x scaling factor
+//       height: 10,            // Bar height, in mm
+//       includetext: true,     // Show human-readable text
+//       textxalign: 'center',  // Align text to center
+//     });
+
+//     // Convert barcode to base64 string
+//     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString('base64')}`;
+
+//     // Create the product with the generated barcode
 //     const product = await Product.create({
 //       title,
 //       content,
 //       price,
 //       quantity,
 //       brand,
-//       postedBy: req.user._id, // Assuming the user is logged in and their ID is available
-//       supplier, // Using the supplier ID provided in the request
+//       postedBy: req.user._id,
+//       supplier,
 //       categories,
 //       image: {
 //         public_id: result.public_id,
 //         url: result.secure_url,
 //       },
+//       barcode: barcodeBase64, // Save barcode in the database
 //     });
 
 //     res.status(201).json({
@@ -59,12 +71,12 @@ const mongoose = require('mongoose');  // Add this line to import mongoose
 //       product,
 //     });
 //   } catch (error) {
-//     console.log(error);
+//     console.error(error);
 //     next(error);
 //   }
 // };
 
-
+// newly added
 exports.createPostProduct = async (req, res, next) => {
   const {
     title,
@@ -74,7 +86,7 @@ exports.createPostProduct = async (req, res, next) => {
     brand,
     supplier,
     categories,
-    image,
+    images, // Array of images with color names
   } = req.body;
 
   try {
@@ -84,12 +96,23 @@ exports.createPostProduct = async (req, res, next) => {
       return res.status(400).json({ message: 'Supplier does not exist' });
     }
 
-    // Upload image to Cloudinary
-    const result = await cloudinary.uploader.upload(image, {
-      folder: 'products',
-      width: 1200,
-      crop: 'scale',
+    // Upload images to Cloudinary and prepare the image objects
+    const imageUploadPromises = images.map(async (imageData) => {
+      const { image, colorName } = imageData;
+      const result = await cloudinary.uploader.upload(image, {
+        folder: 'products',
+        width: 1200,
+        crop: 'scale',
+      });
+      return {
+        url: result.secure_url,
+        public_id: result.public_id,
+        color: colorName,
+      };
     });
+
+    // Wait for all images to be uploaded
+    const uploadedImages = await Promise.all(imageUploadPromises);
 
     // Generate barcode based on unique product ID
     const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
@@ -105,7 +128,7 @@ exports.createPostProduct = async (req, res, next) => {
     // Convert barcode to base64 string
     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString('base64')}`;
 
-    // Create the product with the generated barcode
+    // Create the product with the generated barcode and images
     const product = await Product.create({
       title,
       content,
@@ -115,10 +138,7 @@ exports.createPostProduct = async (req, res, next) => {
       postedBy: req.user._id,
       supplier,
       categories,
-      image: {
-        public_id: result.public_id,
-        url: result.secure_url,
-      },
+      images: uploadedImages, // Store the uploaded images with their colors
       barcode: barcodeBase64, // Save barcode in the database
     });
 
@@ -131,6 +151,22 @@ exports.createPostProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // single product
