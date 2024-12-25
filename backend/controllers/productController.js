@@ -153,22 +153,6 @@ exports.createPostProduct = async (req, res, next) => {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // single product
 exports.showProduct = async (req, res, next) => {
   try {
