@@ -70,18 +70,30 @@ exports.createOrder = async (req, res) => {
 
 
 
-
-
-// Get all orders
+// Fetch all orders with populated product details
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find()
+      .populate('orderItems.productId', 'name price') // Populate product name and price
+      .exec();
     res.status(200).json({ success: true, orders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Failed to fetch orders" });
   }
 };
+
+
+// Get all orders
+// exports.getAllOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find();
+//     res.status(200).json({ success: true, orders });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Failed to fetch orders" });
+//   }
+// };
 
 // Get order by ID
 exports.getOrderById = async (req, res) => {

@@ -6,11 +6,7 @@ const orderItemSchema = new mongoose.Schema({
   price: { type: Number, required: true },
 });
 
-// const orderSchema = new mongoose.Schema({
-//   userId: { type: String, required: true },
-//   orderDate: { type: Date, default: Date.now },
-//   orderItems: { type: [orderItemSchema], required: true },
-// });
+
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   orderDate: { type: Date, default: Date.now },
