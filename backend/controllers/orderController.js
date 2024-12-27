@@ -2,21 +2,60 @@ const Order = require("../models/orderModel");
 const jwt = require("jsonwebtoken");
 
 // Create a new order
+// exports.createOrder = async (req, res) => {
+//   const decoded = jwt.decode(req.headers.authorization, process.env.JWT_SECRET);
+//   const orderDate = new Date();
+//   try {
+//     const data = [...req.body].map((itm) => ({
+//       productId: itm._id,
+//       quantity: itm.quantity,
+//       price: itm.price,
+//     }));
+//     const newOrder = new Order({
+//       userId: decoded.id,
+//       orderDate,
+//       orderItems: data,
+//     });
+//     await newOrder.save();
+//     res.status(201).json({
+//       success: true,
+//       message: "Order placed successfully",
+//       order: newOrder,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Failed to place order" });
+//   }
+// };
+// Create a new order
 exports.createOrder = async (req, res) => {
-  // console.log(req.headers);
   const decoded = jwt.decode(req.headers.authorization, process.env.JWT_SECRET);
   const orderDate = new Date();
+
+  // Destructure customer details from the request body
+  const { name, address, phone, deliveryMethod, notes, paymentMethod } = req.body;
+
   try {
-    const data = [...req.body].map((itm) => ({
+    const data = req.body.cart.map((itm) => ({
       productId: itm._id,
       quantity: itm.quantity,
       price: itm.price,
     }));
+
     const newOrder = new Order({
       userId: decoded.id,
       orderDate,
       orderItems: data,
+      customerDetails: {
+        name,
+        address,
+        phone,
+        deliveryMethod,
+        notes,
+        paymentMethod,
+      },
     });
+
     await newOrder.save();
     res.status(201).json({
       success: true,
@@ -28,6 +67,10 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to place order" });
   }
 };
+
+
+
+
 
 // Get all orders
 exports.getAllOrders = async (req, res) => {
