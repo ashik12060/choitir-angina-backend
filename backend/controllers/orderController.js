@@ -39,6 +39,7 @@ exports.createOrder = async (req, res) => {
     const data = req.body.cart.map((itm) => ({
       productId: itm._id,
       quantity: itm.quantity,
+      title:itm.title,
       price: itm.price,
     }));
 
