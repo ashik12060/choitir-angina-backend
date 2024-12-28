@@ -32,7 +32,25 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         default: 'user'
+    },
+    phone: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    address: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    profession: {
+        type: String,
+        trim: true,
+        default: ''
     }
+
+
+
 }, { timestamps: true })
 
 

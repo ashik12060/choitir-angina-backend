@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, signin, logout, userProfile, getAllUsers, googleLogin } = require('../controllers/authController');
+const { signup, signin, logout, userProfile, getAllUsers, googleLogin, updateUserProfile } = require('../controllers/authController');
 const { isAuthenticated } = require('../middleware/auth');
 const { getAuth } = require('firebase-admin/auth')
 
@@ -14,6 +14,9 @@ router.get('/logout', logout);
 router.get('/me', isAuthenticated, userProfile);
 
 router.get('/users', getAllUsers);
+
+router.put('/me/update/:id', isAuthenticated, updateUserProfile);
+
 
 router.post('/google-login', async (req, res) => {
     const { token } = req.body;

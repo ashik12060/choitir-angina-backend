@@ -85,6 +85,30 @@ exports.userProfile = async (req, res, next) => {
         user
     })
 }
+
+// update user
+exports.updateUserProfile = async (req, res, next) => {
+    try {
+        const updates = req.body; // Extract updates from the request body
+        const user = await User.findByIdAndUpdate(req.user.id, updates, {
+            new: true, // Return the updated user document
+            runValidators: true, // Validate the updates
+        }).select('-password');
+
+        res.status(200).json({
+            success: true,
+            message: "User profile updated successfully",
+            user,
+        });
+    } catch (error) {
+        next(new ErrorResponse("Error updating profile", 500));
+    }
+};
+
+
+
+
+
 // get all users
 exports.getAllUsers = async (req, res) => {
     try {
