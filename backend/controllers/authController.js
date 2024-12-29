@@ -120,7 +120,7 @@ exports.getAllUsers = async (req, res) => {
     }
   };
 
-  
+
 
 // Google sign-in
 exports.googleLogin = async (req, res) => {
