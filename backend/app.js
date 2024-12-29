@@ -42,6 +42,8 @@ const sellerRoute = require('./routes/sellerRoutes');
 const topBannerRoute = require('./routes/topBannerRoutes')
 const supplierRoute = require('./routes/supplierRoutes')
 const customerRoute = require('./routes/customerRoutes')
+// const attendanceRoute = require('./routes/attendanceRoutes')
+const employeeRoute = require('./routes/employeeRoutes')
 
 // firebase initialization
 // admin.initializeApp({
@@ -110,6 +112,8 @@ app.use('/api', sellerRoute);
 app.use('/api', topBannerRoute);
 app.use('/api', supplierRoute);
 app.use('/api', customerRoute);
+// app.use('/api', attendanceRoute);
+app.use('/api', employeeRoute);
 
 
 
