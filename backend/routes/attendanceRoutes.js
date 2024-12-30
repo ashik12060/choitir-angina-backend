@@ -1,14 +1,15 @@
-// const express = require('express');
-// const router = express.Router();
-// const attendanceController = require('../controllers/attendanceController');
+// routes/attendanceRoutes.js
+const express = require('express');
+const router = express.Router();
+const attendanceController = require('../controllers/attendanceController');
 
-// // Check-In Route
-// router.post('/checkin', attendanceController.checkIn);
+// Route to get all employees
+router.get('/employees', attendanceController.getEmployees);
 
-// // Check-Out Route
-// router.post('/checkout', attendanceController.checkOut);
+// Route to check in an employee
+router.post('/attendance/checkin', attendanceController.checkIn);
 
-// // Get Attendance Report Route
-// router.get('/report', attendanceController.getAttendanceReport);
+// Route to check out an employee
+router.post('/attendance/checkout', attendanceController.checkOut);
 
-// module.exports = router;
+module.exports = router;

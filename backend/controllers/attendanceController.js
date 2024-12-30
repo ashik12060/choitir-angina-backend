@@ -1,76 +1,66 @@
-// const Attendance = require('../models/attendanceModel');
+// controllers/attendanceController.js
+const Attendance = require('../models/attendanceModel');
+const Employee = require('../models/employeeModel');
 
-// // Handle Check-In
-// exports.checkIn = async (req, res) => {
-//   const { employeeId } = req.body;
-//   const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+// Get all employees
+exports.getEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    res.json(employees);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch employees.' });
+  }
+};
 
-//   try {
-//     // Check if an attendance record already exists for today
-//     let attendance = await Attendance.findOne({ employeeId, date: currentDate });
+// Check-in an employee
+exports.checkIn = async (req, res) => {
+  const { employeeId, name } = req.body;
 
-//     if (attendance) {
-//       return res.status(400).json({ message: 'You have already checked in for today.' });
-//     }
+  if (!employeeId || !name) {
+    return res.status(400).json({ message: 'Employee ID and name are required.' });
+  }
 
-//     // Create a new attendance record with check-in time
-//     const checkInTime = new Date().toLocaleTimeString(); // e.g., "09:30 AM"
-//     attendance = new Attendance({ employeeId, date: currentDate, checkIn: checkInTime });
-//     await attendance.save();
+  try {
+    // Check if the employee has already checked in but not checked out
+    const existingAttendance = await Attendance.findOne({ employeeId, checkOutTime: null });
 
-//     res.status(201).json({ message: `Checked in successfully at ${checkInTime}`, attendance });
-//   } catch (error) {
-//     console.error('Check-in error:', error);
-//     res.status(500).json({ message: 'Error during check-in' });
-//   }
-// };
+    if (existingAttendance) {
+      return res.status(400).json({ message: 'Employee has already checked in.' });
+    }
 
-// // Handle Check-Out
-// exports.checkOut = async (req, res) => {
-//   const { employeeId } = req.body;
-//   const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const attendance = new Attendance({
+      employeeId,
+      name,
+      checkInTime: new Date(),
+    });
 
-//   try {
-//     // Find the attendance record for today
-//     const attendance = await Attendance.findOne({ employeeId, date: currentDate });
+    await attendance.save();
+    res.json({ message: 'Check-in successful.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to check in.' });
+  }
+};
 
-//     if (!attendance) {
-//       return res.status(400).json({ message: 'You have not checked in today.' });
-//     }
+// Check-out an employee
+exports.checkOut = async (req, res) => {
+  const { employeeId } = req.body;
 
-//     if (attendance.checkOut) {
-//       return res.status(400).json({ message: 'You have already checked out for today.' });
-//     }
+  if (!employeeId) {
+    return res.status(400).json({ message: 'Employee ID is required.' });
+  }
 
-//     // Update the attendance record with check-out time
-//     const checkOutTime = new Date().toLocaleTimeString(); // e.g., "06:30 PM"
-//     attendance.checkOut = checkOutTime;
-//     await attendance.save();
+  try {
+    // Find the latest check-in record for the employee without a check-out time
+    const attendance = await Attendance.findOne({ employeeId, checkOutTime: null });
 
-//     res.status(200).json({ message: `Checked out successfully at ${checkOutTime}`, attendance });
-//   } catch (error) {
-//     console.error('Check-out error:', error);
-//     res.status(500).json({ message: 'Error during check-out' });
-//   }
-// };
+    if (!attendance) {
+      return res.status(400).json({ message: 'No active check-in found for this employee.' });
+    }
 
-// // Get Attendance Report
-// exports.getAttendanceReport = async (req, res) => {
-//   const { employeeId } = req.query; // Optional query to filter by employee
-//   const { startDate, endDate } = req.query; // Optional date range
-
-//   try {
-//     // Build query filters
-//     const filters = {};
-//     if (employeeId) filters.employeeId = employeeId;
-//     if (startDate && endDate) {
-//       filters.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
-//     }
-
-//     const attendanceRecords = await Attendance.find(filters).populate('employeeId', 'name'); // Fetch employee name
-//     res.status(200).json(attendanceRecords);
-//   } catch (error) {
-//     console.error('Error fetching attendance report:', error);
-//     res.status(500).json({ message: 'Error fetching attendance report' });
-//   }
-// };
+    attendance.checkOutTime = new Date();
+    await attendance.save();
+    res.json({ message: 'Check-out successful.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to check out.' });
+  }
+};
