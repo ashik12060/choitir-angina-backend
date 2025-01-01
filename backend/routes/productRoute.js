@@ -26,8 +26,4 @@ router.put('/removelike/product/:id', isAuthenticated, removeLike);
 
 
 
-// Update product quantity
-// router.put('/update/quantity/:id', isAdmin, updateProductQuantity);
-
-
 module.exports = router;

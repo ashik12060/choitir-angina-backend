@@ -7,6 +7,7 @@ router.get('/brands', brandController.getBrands);
 
 // Add a new brand
 router.post('/create/brand', brandController.createBrand);
+router.post('/subcategories')
 
 // Update an existing brand
 router.put('/:id', brandController.updateBrand);

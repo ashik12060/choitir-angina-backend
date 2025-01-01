@@ -7,75 +7,6 @@ const bwipjs = require('bwip-js'); // Import barcode library
 const mongoose = require('mongoose');  // Add this line to import mongoose
 
 
-//create product
-// main createpostproduct
-// exports.createPostProduct = async (req, res, next) => {
-//   const {
-//     title,
-//     content,
-//     price,
-//     quantity,
-//     brand,
-//     supplier,
-//     categories,
-//     image,
-//   } = req.body;
-
-//   try {
-//     // Check if the supplier exists
-//     const supplierExists = await Supplier.findById(supplier);
-//     if (!supplierExists) {
-//       return res.status(400).json({ message: 'Supplier does not exist' });
-//     }
-
-//     // Upload image to Cloudinary
-//     const result = await cloudinary.uploader.upload(image, {
-//       folder: 'products',
-//       width: 1200,
-//       crop: 'scale',
-//     });
-
-//     // Generate barcode based on unique product ID
-//     const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
-//     const barcodeBuffer = await bwipjs.toBuffer({
-//       bcid: 'code128',       // Barcode type
-//       text: barcodeData.toString(), // Text to encode
-//       scale: 3,              // 3x scaling factor
-//       height: 10,            // Bar height, in mm
-//       includetext: true,     // Show human-readable text
-//       textxalign: 'center',  // Align text to center
-//     });
-
-//     // Convert barcode to base64 string
-//     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString('base64')}`;
-
-//     // Create the product with the generated barcode
-//     const product = await Product.create({
-//       title,
-//       content,
-//       price,
-//       quantity,
-//       brand,
-//       postedBy: req.user._id,
-//       supplier,
-//       categories,
-//       image: {
-//         public_id: result.public_id,
-//         url: result.secure_url,
-//       },
-//       barcode: barcodeBase64, // Save barcode in the database
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       product,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     next(error);
-//   }
-// };
-
 // newly added
 exports.createPostProduct = async (req, res, next) => {
   const {
@@ -83,7 +14,8 @@ exports.createPostProduct = async (req, res, next) => {
     content,
     price,
     quantity,
-    brand,
+    brand, // Brand reference
+    subcategory, // Subcategory reference
     supplier,
     categories,
     images, // Array of images with color names
@@ -135,6 +67,7 @@ exports.createPostProduct = async (req, res, next) => {
       price,
       quantity,
       brand,
+      subcategory,
       postedBy: req.user._id,
       supplier,
       categories,
@@ -271,6 +204,7 @@ exports.updateProduct = async (req, res, next) => {
       price,
       quantity,  // If the quantity is passed in the request body, it will update to that
       brand,
+      subcategory,
       image,
     } = req.body;
 
@@ -290,6 +224,7 @@ exports.updateProduct = async (req, res, next) => {
       price: price || currentProduct.price,
       quantity: updatedQuantity, // Set updated quantity here
       brand: brand || currentProduct.brand,
+      subcategory: subcategory || currentProduct.subcategory,
       image: image || currentProduct.image,
     };
 
@@ -480,147 +415,3 @@ exports.updateProductQuantity = async (req, res) => {
 };
 
 
-
-
-
-// const cloudinary = require("../utils/cloudinary");
-// const Product = require("../models/productModel");
-// const Supplier = require("../models/SupplierModel"); // Import Supplier model
-// const ErrorResponse = require("../utils/errorResponse");
-// const main = require("../app");
-
-// // Create product
-// exports.createPostProduct = async (req, res, next) => {
-//   const { title, content, price, brand, supplier, image } = req.body;
-
-//   try {
-//     // Validate supplier ID
-//     const existingSupplier = await Supplier.findById(supplier);
-//     if (!existingSupplier) {
-//       return next(new ErrorResponse("Supplier not found", 404));
-//     }
-
-//     // Cloudinary image upload
-//     const result = await cloudinary.uploader.upload(image, {
-//       folder: "products",
-//       width: 1200,
-//       crop: "scale",
-//     });
-
-//     const product = await Product.create({
-//       title,
-//       content,
-//       price,
-//       brand,
-//       supplier, // Save supplier ID reference
-//       postedBy: req.user._id,
-//       image: {
-//         public_id: result.public_id,
-//         url: result.secure_url,
-//       },
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       product,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     next(error);
-//   }
-// };
-
-// // Get all products
-// exports.showProduct = async (req, res, next) => {
-//   try {
-//     const products = await Product.find()
-//       .sort({ createdAt: -1 })
-//       .populate("postedBy", "name")
-//       .populate("supplier", "name phone email address"); // Populate supplier info
-
-//     res.status(201).json({
-//       success: true,
-//       products,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// // Get single product
-// exports.showSingleProduct = async (req, res, next) => {
-//   try {
-//     const product = await Product.findById(req.params.id)
-//       .populate("comments.postedBy", "name")
-//       .populate("supplier", "name phone email address"); // Populate supplier info
-
-//     if (!product) {
-//       return next(new ErrorResponse("Product not found", 404));
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       product,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// // Update product
-// exports.updateProduct = async (req, res, next) => {
-//   try {
-//     const { title, content, price, brand, supplier, image } = req.body;
-//     const currentProduct = await Product.findById(req.params.id);
-
-//     if (!currentProduct) {
-//       return next(new ErrorResponse("Product not found", 404));
-//     }
-
-//     // Validate supplier ID if provided
-//     if (supplier) {
-//       const existingSupplier = await Supplier.findById(supplier);
-//       if (!existingSupplier) {
-//         return next(new ErrorResponse("Supplier not found", 404));
-//       }
-//     }
-
-//     const data = {
-//       title: title || currentProduct.title,
-//       content: content || currentProduct.content,
-//       price: price || currentProduct.price,
-//       brand: brand || currentProduct.brand,
-//       supplier: supplier || currentProduct.supplier,
-//     };
-
-//     // Modify product image conditionally
-//     if (image && image !== "") {
-//       const ImgId = currentProduct.image.public_id;
-//       if (ImgId) {
-//         await cloudinary.uploader.destroy(ImgId);
-//       }
-
-//       const newImage = await cloudinary.uploader.upload(image, {
-//         folder: "products",
-//         width: 1200,
-//         crop: "scale",
-//       });
-
-//       data.image = {
-//         public_id: newImage.public_id,
-//         url: newImage.secure_url,
-//       };
-//     }
-
-//     const productUpdate = await Product.findByIdAndUpdate(req.params.id, data, {
-//       new: true,
-//     });
-
-//     res.status(200).json({
-//       success: true,
-//       productUpdate,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
