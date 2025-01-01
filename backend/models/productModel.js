@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 
 const { ObjectId } = mongoose.Schema;
+const { Schema } = mongoose;
+
 
 const productSchema = new mongoose.Schema(
   {
@@ -20,10 +22,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "quantity is required"],
     },
-    // brand: {
-    //   type: String,
-    //   required: [false, "brand is required"],
-    // },
+  
     postedBy: {
       type: ObjectId,
       ref: "User",
@@ -42,6 +41,18 @@ const productSchema = new mongoose.Schema(
         required: [true, "Category is required"],
       },
     ],
+
+    sizes: {
+      type: [Schema.Types.Mixed], // This allows both numbers and strings
+      required: true,
+      validate: {
+        validator: function (v) {
+          return Array.isArray(v) && v.length > 0;
+        },
+        message: 'At least one size must be provided',
+      },
+    },
+
     barcode: {
       type: String,
     },

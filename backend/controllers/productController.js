@@ -14,6 +14,7 @@ exports.createPostProduct = async (req, res, next) => {
     content,
     price,
     quantity,
+    sizes,
     brand, // Brand reference
     subcategory, // Subcategory reference
     supplier,
@@ -67,6 +68,7 @@ exports.createPostProduct = async (req, res, next) => {
       price,
       quantity,
       brand,
+      sizes,
       subcategory,
       postedBy: req.user._id,
       supplier,
@@ -202,6 +204,7 @@ exports.updateProduct = async (req, res, next) => {
       title,
       content,
       price,
+      sizes,
       quantity,  // If the quantity is passed in the request body, it will update to that
       brand,
       subcategory,
@@ -224,6 +227,7 @@ exports.updateProduct = async (req, res, next) => {
       price: price || currentProduct.price,
       quantity: updatedQuantity, // Set updated quantity here
       brand: brand || currentProduct.brand,
+      sizes: sizes || currentProduct.sizes,
       subcategory: subcategory || currentProduct.subcategory,
       image: image || currentProduct.image,
     };
