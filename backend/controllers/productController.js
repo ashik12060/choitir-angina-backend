@@ -208,31 +208,92 @@ exports.deleteProduct = async (req, res, next) => {
 };
 
 // update product
+// exports.updateProduct = async (req, res, next) => {
+//   try {
+//     const {
+//       title,
+//       content,
+//       price,
+//       quantity,
+//       brand,
+      
+//       image,
+//     } = req.body;
+//     const currentProduct = await Product.findById(req.params.id);
+
+//     //build the object data
+//     const data = {
+//       title: title || currentProduct.title,
+//       content: content || currentProduct.content,
+//       price: price || currentProduct.price,
+//       quantity: quantity || currentProduct.quantity,
+//       brand: brand || currentProduct.brand,
+      
+//       image: image || currentProduct.image,
+//     };
+
+//     //modify product image conditionally
+//     if (req.body.image !== "") {
+//       const ImgId = currentProduct.image.public_id;
+//       if (ImgId) {
+//         await cloudinary.uploader.destroy(ImgId);
+//       }
+
+//       const newImage = await cloudinary.uploader.upload(req.body.image, {
+//         folder: "products",
+//         width: 1200,
+//         crop: "scale",
+//       });
+
+//       data.image = {
+//         public_id: newImage.public_id,
+//         url: newImage.secure_url,
+//       };
+//     }
+
+//     const productUpdate = await Product.findByIdAndUpdate(req.params.id, data, {
+//       new: true,
+//     });
+
+//     res.status(200).json({
+//       success: true,
+//       productUpdate,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 exports.updateProduct = async (req, res, next) => {
   try {
     const {
       title,
       content,
       price,
-      quantity,
+      quantity,  // If the quantity is passed in the request body, it will update to that
       brand,
-      
       image,
     } = req.body;
+
     const currentProduct = await Product.findById(req.params.id);
 
-    //build the object data
+    if (!currentProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Decrease the quantity by 1 when adding to the cart (if quantity is not provided in the request body)
+    const updatedQuantity = quantity !== undefined ? quantity : currentProduct.quantity - 1;
+
+    // Build the updated product data
     const data = {
       title: title || currentProduct.title,
       content: content || currentProduct.content,
       price: price || currentProduct.price,
-      quantity: quantity || currentProduct.quantity,
+      quantity: updatedQuantity, // Set updated quantity here
       brand: brand || currentProduct.brand,
-      
       image: image || currentProduct.image,
     };
 
-    //modify product image conditionally
+    // Modify product image if provided in the request body
     if (req.body.image !== "") {
       const ImgId = currentProduct.image.public_id;
       if (ImgId) {
@@ -263,6 +324,7 @@ exports.updateProduct = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // comments
 exports.addComment = async (req, res, next) => {
@@ -387,7 +449,35 @@ exports.getProductsByCategory = async (req, res, next) => {
 
 
 
+exports.updateProductQuantity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body; // The quantity to subtract
 
+    // Find the product by ID
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Ensure the quantity is valid (not negative)
+    if (product.quantity - quantity < 0) {
+      return res.status(400).json({ message: "Not enough stock" });
+    }
+
+    // Decrease the product's quantity by the requested amount
+    product.quantity -= quantity;
+
+    // Save the updated product to the database
+    await product.save();
+
+    res.status(200).json({ message: "Product quantity updated", product });
+  } catch (error) {
+    console.error("Error updating product quantity", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 

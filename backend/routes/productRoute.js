@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
-const { createPostProduct, showProduct, showSingleProduct, deleteProduct, updateProduct, addComment, addLike, removeLike, showPaginatedProducts, getProductsByCategory } = require('../controllers/productController');
+const { createPostProduct, showProduct, showSingleProduct, deleteProduct, updateProduct, addComment, addLike, removeLike, showPaginatedProducts, getProductsByCategory, updateProductQuantity } = require('../controllers/productController');
 
 //product routes
 router.post('/product/create', isAuthenticated, isAdmin, createPostProduct);
@@ -26,7 +26,8 @@ router.put('/removelike/product/:id', isAuthenticated, removeLike);
 
 
 
-
+// Update product quantity
+// router.put('/update/quantity/:id', isAdmin, updateProductQuantity);
 
 
 module.exports = router;

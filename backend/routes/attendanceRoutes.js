@@ -4,7 +4,8 @@ const router = express.Router();
 const attendanceController = require('../controllers/attendanceController');
 
 // Route to get all employees
-router.get('/employees', attendanceController.getEmployees);
+router.get('/attendance/employees', attendanceController.getEmployees);
+router.get('/attendance/report', attendanceController.getAllAttendanceReport);
 
 // Route to check in an employee
 router.post('/attendance/checkin', attendanceController.checkIn);

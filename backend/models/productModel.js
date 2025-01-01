@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 
 const { ObjectId } = mongoose.Schema;
 
-
-
 const productSchema = new mongoose.Schema(
     {
       title: {
@@ -15,11 +13,11 @@ const productSchema = new mongoose.Schema(
         required: [true, "content is required"],
       },
       price: {
-        type: String,
+        type: Number,
         required: [true, "price is required"],
       },
       quantity: {
-        type: String,
+        type: Number,
         required: [true, "quantity is required"],
       },
       brand: {
@@ -49,7 +47,7 @@ const productSchema = new mongoose.Schema(
         {
           url: String,
           public_id: String,
-          color: String, // Store color name
+          color: String, 
         },
       ],
       likes: [{ type: ObjectId, ref: "User" }],

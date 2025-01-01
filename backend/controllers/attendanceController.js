@@ -64,3 +64,24 @@ exports.checkOut = async (req, res) => {
     res.status(500).json({ message: 'Failed to check out.' });
   }
 };
+
+
+
+
+// Get attendance report for all employees
+exports.getAllAttendanceReport = async (req, res) => {
+  try {
+    const attendanceRecords = await Attendance.find()
+      .populate('employeeId', 'name') // Populate the employee name
+      .sort({ checkInTime: -1 }); // Sort by check-in time
+
+    if (attendanceRecords.length === 0) {
+      return res.status(404).json({ message: 'No attendance records found.' });
+    }
+
+    res.json(attendanceRecords);
+  } catch (error) {
+    console.error('Error fetching attendance report:', error);
+    res.status(500).json({ message: 'Failed to fetch attendance report.' });
+  }
+};
