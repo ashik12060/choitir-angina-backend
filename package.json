@@ -32,7 +32,7 @@
     "pdfmake": "^0.2.7",
     "puppeteer": "^21.3.8",
     "socket.io": "^4.6.1",
-    "xss-clean": "^0.1.1"
+    "xss-clean": "^0.1.4"
   },
   "description": ""
 }

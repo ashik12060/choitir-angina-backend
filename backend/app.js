@@ -57,8 +57,8 @@ const subCategoryRoute = require('./routes/subCategoryRoute')
 mongoose.connect(process.env.DATABASE, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  useCreateIndex: true,
-  useFindAndModify: false
+  connectTimeoutMS: 30000,  // Increase connection timeout to 30 seconds
+  socketTimeoutMS: 45000    // Increase socket timeout to 45 seconds
   
 })
   .then(() => console.log("DB connected"))
@@ -76,8 +76,8 @@ app.use(cookieParser());
 app.use(cors());
 
 app.use(cors({
-    origin: [ process.env.LOCAL_SITE_URL]
-  }));
+  origin: [process.env.PUBLIC_SITE_URL, process.env.LOCAL_SITE_URL]
+}));
   
 
 // prevent SQL injection
@@ -125,7 +125,7 @@ app.use('/api', subCategoryRoute);
 
 
 app.get('/', (req, res) => {
-  res.send('API is running....')
+  res.send('API is running at chaityr angina')
 })
 
 
