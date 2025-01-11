@@ -4,6 +4,12 @@ const { ObjectId } = mongoose.Schema;
 const { Schema } = mongoose;
 
 
+const variantSchema = new mongoose.Schema({
+  size: { type: String, required: true },
+  color: { type: String, required: true },
+  quantity: { type: Number, default: 0 },
+});
+
 const productSchema = new mongoose.Schema(
   {
     title: {
@@ -18,10 +24,13 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "price is required"],
     },
-    quantity: {
-      type: Number,
-      required: [true, "quantity is required"],
-    },
+
+    variants: [variantSchema], // Add the variants array to the schema
+
+    // quantity: {
+    //   type: Number,
+    //   required: [true, "quantity is required"],
+    // },
   
     postedBy: {
       type: ObjectId,
@@ -42,16 +51,16 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
-    sizes: {
-      type: [Schema.Types.Mixed], // This allows both numbers and strings
-      required: true,
-      validate: {
-        validator: function (v) {
-          return Array.isArray(v) && v.length > 0;
-        },
-        message: 'At least one size must be provided',
-      },
-    },
+    // sizes: {
+    //   type: [Schema.Types.Mixed], // This allows both numbers and strings
+    //   required: true,
+    //   validate: {
+    //     validator: function (v) {
+    //       return Array.isArray(v) && v.length > 0;
+    //     },
+    //     message: 'At least one size must be provided',
+    //   },
+    // },
 
     barcode: {
       type: String,

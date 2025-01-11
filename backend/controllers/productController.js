@@ -13,12 +13,13 @@ exports.createPostProduct = async (req, res, next) => {
     title,
     content,
     price,
-    quantity,
-    sizes,
+    // quantity,
+    // sizes,
     brand, // Brand reference
     subcategory, // Subcategory reference
     supplier,
     categories,
+    variants,
     images, // Array of images with color names
   } = req.body;
 
@@ -66,12 +67,13 @@ exports.createPostProduct = async (req, res, next) => {
       title,
       content,
       price,
-      quantity,
+      // quantity,
       brand,
-      sizes,
+      // sizes,
       subcategory,
       postedBy: req.user._id,
       supplier,
+      variants,
       categories,
       images: uploadedImages, // Store the uploaded images with their colors
       barcode: barcodeBase64, // Save barcode in the database
