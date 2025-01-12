@@ -65,6 +65,7 @@ const productSchema = new mongoose.Schema(
     barcode: {
       type: String,
     },
+    barcodeNumber: { type: String }, // Custom barcode number
     images: [
       {
         url: String,

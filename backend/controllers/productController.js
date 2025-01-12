@@ -20,6 +20,7 @@ exports.createPostProduct = async (req, res, next) => {
     supplier,
     categories,
     variants,
+    barcode, // Include barcode here
     images, // Array of images with color names
   } = req.body;
 
@@ -49,7 +50,8 @@ exports.createPostProduct = async (req, res, next) => {
     const uploadedImages = await Promise.all(imageUploadPromises);
 
     // Generate barcode based on unique product ID
-    const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
+    // const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
+    const barcodeData = barcode || new mongoose.Types.ObjectId().toString(); // If no barcode input, generate a default one
     const barcodeBuffer = await bwipjs.toBuffer({
       bcid: 'code128',       // Barcode type
       text: barcodeData.toString(), // Text to encode
@@ -77,6 +79,7 @@ exports.createPostProduct = async (req, res, next) => {
       categories,
       images: uploadedImages, // Store the uploaded images with their colors
       barcode: barcodeBase64, // Save barcode in the database
+      barcodeNumber: barcode, // Save the custom barcode number as text
     });
 
     res.status(201).json({
