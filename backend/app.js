@@ -47,6 +47,7 @@ const employeeRoute = require('./routes/employeeRoutes')
 const brandRoute = require('./routes/brandRoutes')
 const salesRoute = require('./routes/salesRoute')
 const subCategoryRoute = require('./routes/subCategoryRoute')
+const shopRoutes = require('./routes/shopRoutes')
 
 // firebase initialization
 // admin.initializeApp({
@@ -120,6 +121,7 @@ app.use('/api', employeeRoute);
 app.use('/api', brandRoute);
 app.use('/api', salesRoute);
 app.use('/api', subCategoryRoute);
+app.use('/api', shopRoutes);
 
 
 

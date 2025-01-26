@@ -2,10 +2,9 @@ const cloudinary = require("../utils/cloudinary");
 const Product = require("../models/productModel");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../app");
-const Supplier = require('../models/SupplierModel');
-const bwipjs = require('bwip-js'); // Import barcode library
-const mongoose = require('mongoose');  // Add this line to import mongoose
-
+const Supplier = require("../models/SupplierModel");
+const bwipjs = require("bwip-js"); 
+const mongoose = require("mongoose");
 
 // newly added
 exports.createPostProduct = async (req, res, next) => {
@@ -13,31 +12,30 @@ exports.createPostProduct = async (req, res, next) => {
     title,
     content,
     price,
-    // quantity,
-    // sizes,
-    brand, // Brand reference
-    subcategory, // Subcategory reference
+    description,
+    brand, 
+    subcategory, 
     supplier,
     categories,
     variants,
-    barcode, // Include barcode here
-    images, // Array of images with color names
+    barcode, 
+    images, 
   } = req.body;
 
   try {
-    // Check if the supplier exists
+  
     const supplierExists = await Supplier.findById(supplier);
     if (!supplierExists) {
-      return res.status(400).json({ message: 'Supplier does not exist' });
+      return res.status(400).json({ message: "Supplier does not exist" });
     }
 
-    // Upload images to Cloudinary and prepare the image objects
+   
     const imageUploadPromises = images.map(async (imageData) => {
       const { image, colorName } = imageData;
       const result = await cloudinary.uploader.upload(image, {
-        folder: 'products',
+        folder: "products",
         width: 1200,
-        crop: 'scale',
+        crop: "scale",
       });
       return {
         url: result.secure_url,
@@ -46,40 +44,41 @@ exports.createPostProduct = async (req, res, next) => {
       };
     });
 
-    // Wait for all images to be uploaded
+   
     const uploadedImages = await Promise.all(imageUploadPromises);
 
-    // Generate barcode based on unique product ID
-    // const barcodeData = new mongoose.Types.ObjectId(); // Generate a unique identifier for the barcode
-    const barcodeData = barcode || new mongoose.Types.ObjectId().toString(); // If no barcode input, generate a default one
+    const barcodeData = barcode || new mongoose.Types.ObjectId().toString();  
     const barcodeBuffer = await bwipjs.toBuffer({
-      bcid: 'code128',       // Barcode type
-      text: barcodeData.toString(), // Text to encode
-      scale: 3,              // 3x scaling factor
-      height: 10,            // Bar height, in mm
-      includetext: true,     // Show human-readable text
-      textxalign: 'center',  // Align text to center
+      bcid: "code128", 
+      text: barcodeData.toString(), 
+      scale: 3, 
+      height: 10, 
+      includetext: true, 
+      textxalign: "center", 
     });
 
-    // Convert barcode to base64 string
-    const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString('base64')}`;
+    
+    const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString(
+      "base64"
+    )}`;
 
-    // Create the product with the generated barcode and images
+    
     const product = await Product.create({
       title,
       content,
       price,
-      // quantity,
+      description,
+     
       brand,
-      // sizes,
+     
       subcategory,
       postedBy: req.user._id,
       supplier,
       variants,
       categories,
-      images: uploadedImages, // Store the uploaded images with their colors
-      barcode: barcodeBase64, // Save barcode in the database
-      barcodeNumber: barcode, // Save the custom barcode number as text
+      images: uploadedImages, 
+      barcode: barcodeBase64,
+      barcodeNumber: barcode, 
     });
 
     res.status(201).json({
@@ -91,6 +90,68 @@ exports.createPostProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+// // Get products by shop
+// exports.getProductsByShop = async (req, res) => {
+//   try {
+//     const { shopId } = req.query;
+//     const products = await Product.find({ shop: shopId });
+//     res.status(200).json(products);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
+// exports.assignProductToShop = async (req, res) => {
+//   const { productId, shopId } = req.body;
+
+//   try {
+//     const product = await Product.findById(productId);
+//     if (!product) {
+//       return res.status(404).json({ error: 'Product not found' });
+//     }
+
+//     product.shop = shopId; // Assign the shop to the product
+//     await product.save();
+
+//     res.status(200).json({ message: 'Product assigned to shop successfully', product });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
+// Assign products to a shop
+exports.assignProductToShop = async (req, res) => {
+  const { productIds, shopId } = req.body;
+
+  try {
+    const products = await Product.updateMany(
+      { _id: { $in: productIds } },
+      { shop: shopId }
+    );
+    res.status(200).json({ message: 'Products assigned to shop', products });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get products by shop
+exports.getProductsByShop = async (req, res) => {
+  const { shopId } = req.params;
+
+  try {
+    const products = await Product.find({ shop: shopId }).populate('shop');
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 
 // single product
@@ -123,8 +184,6 @@ exports.showSingleProduct = async (req, res, next) => {
     next(error);
   }
 };
- 
-
 
 // Delete showProduct
 exports.deleteProduct = async (req, res, next) => {
@@ -156,7 +215,7 @@ exports.deleteProduct = async (req, res, next) => {
 //       price,
 //       quantity,
 //       brand,
-      
+
 //       image,
 //     } = req.body;
 //     const currentProduct = await Product.findById(req.params.id);
@@ -168,7 +227,7 @@ exports.deleteProduct = async (req, res, next) => {
 //       price: price || currentProduct.price,
 //       quantity: quantity || currentProduct.quantity,
 //       brand: brand || currentProduct.brand,
-      
+
 //       image: image || currentProduct.image,
 //     };
 
@@ -210,7 +269,7 @@ exports.updateProduct = async (req, res, next) => {
       content,
       price,
       sizes,
-      quantity,  // If the quantity is passed in the request body, it will update to that
+      quantity, // If the quantity is passed in the request body, it will update to that
       brand,
       subcategory,
       image,
@@ -223,7 +282,8 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     // Decrease the quantity by 1 when adding to the cart (if quantity is not provided in the request body)
-    const updatedQuantity = quantity !== undefined ? quantity : currentProduct.quantity - 1;
+    const updatedQuantity =
+      quantity !== undefined ? quantity : currentProduct.quantity - 1;
 
     // Build the updated product data
     const data = {
@@ -268,7 +328,6 @@ exports.updateProduct = async (req, res, next) => {
     next(error);
   }
 };
-
 
 // comments
 exports.addComment = async (req, res, next) => {
@@ -363,15 +422,13 @@ exports.showPaginatedProducts = async (req, res, next) => {
       products,
       totalPages: Math.ceil(totalProducts / limit),
       currentPage: page,
-      totalProducts
+      totalProducts,
     });
   } catch (error) {
     console.error(error);
     next(new ErrorResponse("Failed to load products", 500));
   }
 };
-
-
 
 // Filter products by category
 exports.getProductsByCategory = async (req, res, next) => {
@@ -390,8 +447,6 @@ exports.getProductsByCategory = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 exports.updateProductQuantity = async (req, res) => {
   try {
@@ -422,5 +477,3 @@ exports.updateProductQuantity = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
