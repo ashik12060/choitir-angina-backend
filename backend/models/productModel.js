@@ -19,7 +19,7 @@ const productSchema = new mongoose.Schema(
     },
     
     // shop 
-    // shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
 
     
     content: {

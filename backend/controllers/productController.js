@@ -92,47 +92,14 @@ exports.createPostProduct = async (req, res, next) => {
 };
 
 
-
-// // Get products by shop
-// exports.getProductsByShop = async (req, res) => {
-//   try {
-//     const { shopId } = req.query;
-//     const products = await Product.find({ shop: shopId });
-//     res.status(200).json(products);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-
-// exports.assignProductToShop = async (req, res) => {
-//   const { productId, shopId } = req.body;
-
-//   try {
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//       return res.status(404).json({ error: 'Product not found' });
-//     }
-
-//     product.shop = shopId; // Assign the shop to the product
-//     await product.save();
-
-//     res.status(200).json({ message: 'Product assigned to shop successfully', product });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-
 // Assign products to a shop
 exports.assignProductToShop = async (req, res) => {
   const { productIds, shopId } = req.body;
-
   try {
     const products = await Product.updateMany(
       { _id: { $in: productIds } },
       { shop: shopId }
-    );
+    );  
     res.status(200).json({ message: 'Products assigned to shop', products });
   } catch (error) {
     res.status(500).json({ error: error.message });
