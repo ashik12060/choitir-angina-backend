@@ -24,117 +24,121 @@ exports.getShops = async (req, res) => {
 
 
 
-// // Assign a product to a shop
+// main code
+// assign products to shops
 // exports.assignProductToShop = async (req, res) => {
 //   const { shopId } = req.params;
-//   const { productId, quantity } = req.body;
+//   const { productId, variantAssignments } = req.body; // variantAssignments = [{ variantId, quantity }, ...]
 
 //   try {
-//     // Validate inputs
-//     if (!productId || !quantity || quantity <= 0) {
-//       return res.status(400).json({ error: "Invalid product or quantity." });
+//     if (!productId || !variantAssignments || !Array.isArray(variantAssignments)) {
+//       return res.status(400).json({ error: "Invalid product or variant assignments." });
 //     }
 
-//     // Find the product
 //     const product = await Product.findById(productId);
 //     if (!product) {
 //       return res.status(404).json({ error: "Product not found." });
 //     }
 
-//     // Check available stock
-//     const totalStock = product.variants.reduce((sum, variant) => sum + variant.quantity, 0);
-//     if (quantity > totalStock) {
-//       return res.status(400).json({ error: "Insufficient stock available." });
-//     }
-
-//     // Deduct stock from product variants
-//     let remainingToAssign = quantity;
-//     product.variants.forEach((variant) => {
-//       if (remainingToAssign > 0) {
-//         const assignFromVariant = Math.min(remainingToAssign, variant.quantity);
-//         variant.quantity -= assignFromVariant;
-//         remainingToAssign -= assignFromVariant;
-//       }
-//     });
-//     await product.save();
-
-//     // Find the shop
 //     const shop = await Shop.findById(shopId);
 //     if (!shop) {
 //       return res.status(404).json({ error: "Shop not found." });
 //     }
 
-//     // Check if product is already assigned to the shop
-//     const existingProduct = shop.products.find((p) => p.product.toString() === productId);
+//     let totalAssigned = 0;
+//     variantAssignments.forEach(({ variantId, quantity }) => {
+//       const variant = product.variants.find(v => v._id.toString() === variantId);
+//       if (!variant || quantity > variant.quantity) {
+//         throw new Error("Invalid variant or insufficient stock.");
+//       }
+//       variant.quantity -= quantity;
+//       totalAssigned += quantity;
+//     });
+
+//     await product.save();
+
+//     const existingProduct = shop.products.find(p => p.product.toString() === productId);
+
 //     if (existingProduct) {
-//       existingProduct.assignedQuantity += quantity;
+//       variantAssignments.forEach(({ variantId, quantity }) => {
+//         const existingVariant = existingProduct.variants.find(v => v.variant.toString() === variantId);
+//         if (existingVariant) {
+//           existingVariant.assignedQuantity += quantity;
+//         } else {
+//           existingProduct.variants.push({ variant: variantId, assignedQuantity: quantity });
+//         }
+//       });
 //     } else {
-//       shop.products.push({ product: productId, assignedQuantity: quantity });
+//       shop.products.push({
+//         product: productId,
+//         variants: variantAssignments.map(({ variantId, quantity }) => ({
+//           variant: variantId,
+//           assignedQuantity: quantity
+//         }))
+//       });
 //     }
 
 //     await shop.save();
 
 //     res.status(200).json({ message: "Product assigned successfully.", shop });
 //   } catch (error) {
+//     console.error("Error assigning product:", error);
 //     res.status(500).json({ error: error.message });
 //   }
 // };
 
 
-
 exports.assignProductToShop = async (req, res) => {
   const { shopId } = req.params;
-  const { productId, quantity } = req.body;
+  const { productId, variantAssignments } = req.body; // variantAssignments = [{ variantId, quantity }, ...]
 
   try {
-    // Validate inputs
-    if (!productId || !quantity || quantity <= 0) {
-      return res.status(400).json({ error: "Invalid product or quantity." });
+    if (!productId || !variantAssignments || !Array.isArray(variantAssignments)) {
+      return res.status(400).json({ error: "Invalid product or variant assignments." });
     }
 
-    // Find the product
     const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found." });
+    if (!product) return res.status(404).json({ error: "Product not found." });
+
+    // Check if description is missing and provide a default
+    if (!product.description) {
+      product.description = "No description available."; // Set default description
+      await product.save(); // Save the updated product
     }
 
-    // Ensure variants exist before reducing stock
-    const totalStock = product.variants && product.variants.length > 0
-      ? product.variants.reduce((sum, variant) => sum + variant.quantity, 0)
-      : 0;
+    const shop = await Shop.findById(shopId);
+    if (!shop) return res.status(404).json({ error: "Shop not found." });
 
-    if (quantity > totalStock) {
-      return res.status(400).json({ error: "Insufficient stock available." });
-    }
-
-    // Deduct stock from product variants
-    let remainingToAssign = quantity;
-    product.variants.forEach((variant) => {
-      if (remainingToAssign > 0) {
-        const assignFromVariant = Math.min(remainingToAssign, variant.quantity);
-        variant.quantity -= assignFromVariant;
-        remainingToAssign -= assignFromVariant;
+    let totalAssigned = 0;
+    for (const { variantId, quantity } of variantAssignments) {
+      const variant = product.variants.find(v => v._id.toString() === variantId);
+      if (!variant || quantity > variant.quantity) {
+        return res.status(400).json({ error: `Invalid variant or insufficient stock for variant ${variantId}.` });
       }
-    });
+      variant.quantity -= quantity;
+      totalAssigned += quantity;
+    }
+
     await product.save();
 
-    // Find the shop
-    const shop = await Shop.findById(shopId);
-    if (!shop) {
-      return res.status(404).json({ error: "Shop not found." });
-    }
-
-    // Ensure shop.products array exists
-    if (!shop.products) {
-      shop.products = [];
-    }
-
-    // Check if product is already assigned to the shop
-    const existingProduct = shop.products.find((p) => p.product.toString() === productId);
+    const existingProduct = shop.products.find(p => p.product.toString() === productId);
     if (existingProduct) {
-      existingProduct.assignedQuantity += quantity;
+      variantAssignments.forEach(({ variantId, quantity }) => {
+        const existingVariant = existingProduct.variants.find(v => v.variant.toString() === variantId);
+        if (existingVariant) {
+          existingVariant.assignedQuantity += quantity;
+        } else {
+          existingProduct.variants.push({ variant: variantId, assignedQuantity: quantity });
+        }
+      });
     } else {
-      shop.products.push({ product: productId, assignedQuantity: quantity });
+      shop.products.push({
+        product: productId,
+        variants: variantAssignments.map(({ variantId, quantity }) => ({
+          variant: variantId,
+          assignedQuantity: quantity
+        }))
+      });
     }
 
     await shop.save();
@@ -142,6 +146,43 @@ exports.assignProductToShop = async (req, res) => {
     res.status(200).json({ message: "Product assigned successfully.", shop });
   } catch (error) {
     console.error("Error assigning product:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+// get products by shop
+exports.getShopProducts = async (req, res) => {
+  const { shopId } = req.params;
+
+  try {
+    // const shop = await Shop.findById(shopId)
+    //   .populate({
+    //     path: "products.product",
+    //     select: "title description price images",
+    //   })
+    //   .populate({
+    //     path: "products.variants.variant",
+    //     select: "size color",
+    //   });
+    const shop = await Shop.findById(shopId)
+  .populate({
+    path: "products.product",
+    model: "Product",
+  })
+  .populate({
+    path: "products.variants.variant",
+    model: "Variant", // Ensure this matches your Variant model
+  });
+
+
+    if (!shop) {
+      return res.status(404).json({ error: "Shop not found" });
+    }
+
+    res.status(200).json(shop.products);
+  } catch (error) {
+    console.error("Error fetching shop products:", error);
     res.status(500).json({ error: error.message });
   }
 };

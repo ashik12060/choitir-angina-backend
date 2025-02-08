@@ -19,7 +19,8 @@ const productSchema = new mongoose.Schema(
     },
     
     // shop 
-    shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+    // shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+    shop: [{ type: mongoose.Schema.Types.ObjectId, ref: "Shop" }],
 
     
     content: {
@@ -28,7 +29,7 @@ const productSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, "content is required"],
+      required: [false, "content is required"],
     },
 
    
