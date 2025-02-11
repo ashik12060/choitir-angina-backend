@@ -1,5 +1,5 @@
 const express = require("express");
-const { createWarehouseProduct, getWarehouseProducts, getWarehouseProductById, updateWarehouseProduct, deleteWarehouseProduct, updateProductStatus } = require("../controllers/WarehouseCleanController");
+const { createWarehouseProduct, getWarehouseProducts, getWarehouseProductById, updateWarehouseProduct, deleteWarehouseProduct, updateProductStatus, updateWarehouseProductQuantity } = require("../controllers/warehouseCleanController");
 const { isAdmin, isAuthenticated } = require("../middleware/auth");
 const router = express.Router();
 
@@ -7,6 +7,7 @@ const router = express.Router();
 router.post("/warehouse-product/create", createWarehouseProduct);
 router.get("/warehouse-products/show", getWarehouseProducts);
 router.get("/warehouse-product:id", getWarehouseProductById);
+router.put("/warehouse-product/update-quantity/:id", updateWarehouseProductQuantity);
 router.put("/warehouse-products/update-status/:id", updateProductStatus);
 
 router.put("/warehouse-product:id", updateWarehouseProduct);

@@ -1,8 +1,56 @@
 const WarehouseSale = require('../models/salesWarehouseModel');
+const { updateWarehouseProductQuantity } = require('./warehouseCleanController');
+
+
+// exports.createWarehouseSale = async (req, res) => {
+//   try {
+//     const { customerName,customerPhone,customerAddress,warehouseProducts, totalPrice, discountAmount, vatAmount, netPayable, paymentMethod } = req.body;
+
+//     // Create the sale object
+//     const saleData = {
+//       warehouseProducts,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       customerAddress,
+//       customerPhone,
+//       customerName,
+
+//     };
+
+  
+
+//     // Save the sale to the database
+//     const sale = new WarehouseSale(saleData);
+//     await sale.save();
+
+//     return res.status(201).json({ message: 'Sale created successfully', sale });
+//   } catch (error) {
+//     return res.status(500).json({ message: 'Error creating sale', error });
+//   }
+// };
+
+
+
+
+// Get All Sales
+
 
 exports.createWarehouseSale = async (req, res) => {
   try {
-    const { customerName,customerPhone,customerAddress,warehouseProducts, totalPrice, discountAmount, vatAmount, netPayable, paymentMethod } = req.body;
+    const { 
+      customerName,
+      customerPhone,
+      customerAddress,
+      warehouseProducts,
+      totalPrice,
+      discountAmount,
+      vatAmount,
+      netPayable,
+      paymentMethod
+    } = req.body;
 
     // Create the sale object
     const saleData = {
@@ -15,20 +63,21 @@ exports.createWarehouseSale = async (req, res) => {
       customerAddress,
       customerPhone,
       customerName,
-
     };
-
-    // Only include customerInfo if it's provided
-    // if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
-    //   saleData.customerInfo = customerInfo;
-    // }
 
     // Save the sale to the database
     const sale = new WarehouseSale(saleData);
     await sale.save();
 
+    // After sale, update the quantity in the warehouse
+    for (const product of warehouseProducts) {
+      // Update the product quantity in the warehouse after sale
+      await updateWarehouseProductQuantity(product.productId, product.quantity);
+    }
+
     return res.status(201).json({ message: 'Sale created successfully', sale });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: 'Error creating sale', error });
   }
 };
@@ -36,7 +85,7 @@ exports.createWarehouseSale = async (req, res) => {
 
 
 
-// Get All Sales
+
 exports.getAllWarehouseSales = async (req, res) => {
   try {
     const sales = await Sale.find();
