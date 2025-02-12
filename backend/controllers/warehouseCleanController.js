@@ -11,11 +11,15 @@ exports.createWarehouseProduct = async (req, res) => {
             return res.status(400).json({ error: "All fields are required" });
         }
 
+
+
         const newProduct = new WarehouseProduct({ 
             title, 
             price, 
             quantity, 
             type, 
+            originalQuantity: quantity ,
+           
             status: "Pending"  // Default status when creating a product
         });
 
@@ -134,30 +138,102 @@ exports.updateWarehouseProduct = async (req, res) => {
 
 
 // Update product status (toggle between "Pending" and "Sold Out")
+// exports.updateProductStatus = async (req, res) => {
+//     try {
+//         const { status } = req.body;
+//         const product = await WarehouseProduct.findById(req.params.id);
+
+//         if (!product) {
+//             return res.status(404).json({ error: "Product not found" });
+//         }
+
+//         // Update status if required
+//         product.status = status;
+
+//         // If quantity is zero, auto-set to "Sold Out"
+//         if (product.quantity === 0) {
+//             product.status = "Sold Out";
+//         }
+
+//         await product.save();
+
+//         res.status(200).json({ message: "Product status updated successfully", product });
+//     } catch (error) {
+//         res.status(500).json({ error: "Server error", details: error.message });
+//     }
+// };
+
+
+// exports.updateProductStatus = async (req, res) => {
+//     try {
+//         const { status } = req.body;
+//         const product = await WarehouseProduct.findById(req.params.id);
+
+//         if (!product) {
+//             return res.status(404).json({ error: "Product not found" });
+//         }
+
+//         // Handle status updates
+//         if (status === "Sold Out") {
+//             product.soldQuantity = product.quantity; // Store sold quantity
+//             product.quantity = 0; // Reduce stock
+//         } 
+//         else if (status === "Canceled") {
+//             // Ensure soldQuantity is valid before restoring quantity
+//             if (product.soldQuantity > 0) {
+//                 product.quantity += product.soldQuantity; // Restore quantity
+//                 product.soldQuantity = 0; // Reset sold quantity
+//             }
+//         }
+
+//         // Update status
+//         product.status = status;
+
+//         await product.save();
+
+//         res.status(200).json({ message: "Product status updated successfully", product });
+//     } catch (error) {
+//         console.error("Error updating product status:", error);
+//         res.status(500).json({ error: "Server error", details: error.message });
+//     }
+// };
+
+
 exports.updateProductStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const product = await WarehouseProduct.findById(req.params.id);
+        const { id } = req.params;
 
+        const product = await WarehouseProduct.findById(id);
         if (!product) {
             return res.status(404).json({ error: "Product not found" });
         }
 
-        // Update status if required
-        product.status = status;
-
-        // If quantity is zero, auto-set to "Sold Out"
-        if (product.quantity === 0) {
-            product.status = "Sold Out";
+        if (status === "Pending" && !product.originalQuantity) {
+            product.originalQuantity = product.quantity; // Set originalQuantity when status is pending
         }
 
+        // if (status === "Canceled") {
+        //     product.quantity = product.originalQuantity; // Restore the original quantity when canceled
+        // }
+        if (status === "Canceled") {
+            if (!product.originalQuantity) {
+                return res.status(400).json({ error: "Original quantity not set" });
+            }
+            product.quantity = product.originalQuantity; // Restore the original quantity
+        }
+        
+
+        product.status = status;
         await product.save();
 
-        res.status(200).json({ message: "Product status updated successfully", product });
+        res.status(200).json({ message: "Product updated successfully", product });
     } catch (error) {
-        res.status(500).json({ error: "Server error", details: error.message });
+        console.error("Error updating product status:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 // Delete a warehouse product
 exports.deleteWarehouseProduct = async (req, res) => {

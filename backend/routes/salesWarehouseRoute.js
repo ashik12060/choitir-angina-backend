@@ -1,6 +1,6 @@
 // routes/salesRoutes.js
 const express = require('express');
-const { createWarehouseSale, getAllWarehouseSales, getWarehouseSaleById, updateWarehouseSale, deleteWarehouseSale } = require('../controllers/salesWarehouseController');
+const { createWarehouseSale, getAllWarehouseSales, getWarehouseSaleById, updateWarehouseSale, deleteWarehouseSale, updateProductStatusSales } = require('../controllers/salesWarehouseController');
 const router = express.Router();
 // const salesController = require('../controllers/salesWarehouseController');
 
@@ -9,7 +9,10 @@ router.post('/warehouse-sales/create', createWarehouseSale);
 
 
 // Route to get all sales
-router.get('/warehouse-sales', getAllWarehouseSales);
+router.get('/warehouse-sales/show', getAllWarehouseSales);
+
+router.put("/warehouse-sales/update-status/:saleId/:productId", updateProductStatusSales);
+
 
 // Route to get a specific sale by ID
 router.get('/warehouse-sales/:id', getWarehouseSaleById);
