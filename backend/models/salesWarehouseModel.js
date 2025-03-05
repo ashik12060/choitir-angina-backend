@@ -1,4 +1,4 @@
-// models/Sale.js
+
 const mongoose = require("mongoose");
 
 const salesWarehouseSchema = new mongoose.Schema({

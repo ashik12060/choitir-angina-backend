@@ -83,7 +83,7 @@ exports.createWarehouseSale = async (req, res) => {
 };
 
 
-// ✅ Function to update product status
+//  Function to update product status
 exports.updateProductStatusSales = async (req, res) => {
   try {
     const { saleId, productId } = req.params;
@@ -91,13 +91,13 @@ exports.updateProductStatusSales = async (req, res) => {
 
     console.log("Updating product status:", { saleId, productId, status });
 
-    // ✅ Find the sale
+    //  Find the sale
     const sale = await WarehouseSale.findById(saleId);
     if (!sale) {
       return res.status(404).json({ message: "Sale not found" });
     }
 
-    // ✅ Find the product inside the sale
+    //  Find the product inside the sale
     const productIndex = sale.warehouseProducts.findIndex(
       (product) => product.productId.toString() === productId
     );

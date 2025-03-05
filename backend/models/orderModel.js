@@ -20,6 +20,7 @@ const orderSchema = new mongoose.Schema({
     notes: { type: String },
     paymentMethod: { type: String, required: true },
   },
+  status: { type: String, enum: ["Pending", "Delivered", "Canceled"], default: "Pending" },
 });
 
 module.exports = mongoose.model("Order", orderSchema);
