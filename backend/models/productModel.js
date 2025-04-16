@@ -9,6 +9,8 @@ const variantSchema = new mongoose.Schema({
   color: { type: String, required: true },
   quantity: { type: Number, default: 0 },
   productLength: { type: Number, default: 0 },
+  subBarcode: String,
+  subBarcodeSvg: String,
 });
 
 const productSchema = new mongoose.Schema(
@@ -40,7 +42,7 @@ const productSchema = new mongoose.Schema(
     },
    
 
-    variants: [variantSchema], // Add the variants array to the schema
+    variants: [variantSchema], 
 
    
   
