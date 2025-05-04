@@ -1,10 +1,89 @@
 const Sale = require('../models/salesModel');
+const Product = require("../models/productModel"); // Adjust path if needed
+
+
+// exports.createSale = async (req, res) => {
+//   try {
+//     const { products, customerInfo, totalPrice, discountAmount, vatAmount, netPayable, paymentMethod } = req.body;
+
+//     // Create the sale object
+//     const saleData = {
+//       products,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//     };
+
+//     // Only include customerInfo if it's provided
+//     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
+//       saleData.customerInfo = customerInfo;
+//     }
+
+//     // Save the sale to the database
+//     const sale = new Sale(saleData);
+//     await sale.save();
+
+//     return res.status(201).json({ message: 'Sale created successfully', sale });
+//   } catch (error) {
+//     return res.status(500).json({ message: 'Error creating sale', error });
+//   }
+// };
+
+
+
+
+// Get All Sales
+
 
 exports.createSale = async (req, res) => {
   try {
-    const { products, customerInfo, totalPrice, discountAmount, vatAmount, netPayable, paymentMethod } = req.body;
+    const {
+      products,
+      customerInfo,
+      totalPrice,
+      discountAmount,
+      vatAmount,
+      netPayable,
+      paymentMethod,
+    } = req.body;
 
-    // Create the sale object
+    // Loop through each product in the sale
+    for (const item of products) {
+      const { productId, size, color, quantity } = item;
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: `Product not found: ${item.title}` });
+      }
+
+      // Find the matching variant (assuming you store variants like this)
+      const variant = product.variants.find(
+        (v) => v.size === size && v.color === color
+      );
+
+      if (!variant) {
+        return res.status(404).json({
+          message: `Variant not found for product: ${item.title} (${size}, ${color})`,
+        });
+      }
+
+      // Check if there's enough quantity
+      if (variant.quantity < quantity) {
+        return res.status(400).json({
+          message: `Not enough stock for ${item.title} - ${size}, ${color}`,
+        });
+      }
+
+      // Decrease the quantity
+      variant.quantity -= quantity;
+
+      // Save the updated product
+      await product.save();
+    }
+
+    // Now create the sale
     const saleData = {
       products,
       totalPrice,
@@ -14,25 +93,23 @@ exports.createSale = async (req, res) => {
       paymentMethod,
     };
 
-    // Only include customerInfo if it's provided
     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
       saleData.customerInfo = customerInfo;
     }
 
-    // Save the sale to the database
     const sale = new Sale(saleData);
     await sale.save();
 
-    return res.status(201).json({ message: 'Sale created successfully', sale });
+    return res.status(201).json({ message: "Sale created successfully", sale });
   } catch (error) {
-    return res.status(500).json({ message: 'Error creating sale', error });
+    console.error("Error creating sale:", error);
+    return res.status(500).json({ message: "Error creating sale", error });
   }
 };
 
 
 
 
-// Get All Sales
 exports.getAllSales = async (req, res) => {
   try {
     const sales = await Sale.find();
