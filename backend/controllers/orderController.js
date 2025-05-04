@@ -273,6 +273,7 @@ exports.createOrder = async (req, res) => {
       },
       status: "Pending",
     });
+    console.log(newOrder);  // Add this to check if size and color are present
 
     await newOrder.save();
     res.status(201).json({ success: true, message: "Order placed successfully", order: newOrder });
@@ -412,11 +413,55 @@ exports.deleteOrderById = async (req, res) => {
 //   }
 // };
 
+
+
+
+// exports.updateOrderStatus = async (req, res) => {
+//   const { orderId } = req.params;
+//   const { status } = req.body;
+
+//   if (!["Pending", "Delivered", "Canceled"].includes(status)) {
+//     return res.status(400).json({ success: false, message: "Invalid status" });
+//   }
+
+//   try {
+//     const order = await Order.findById(orderId);
+//     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+//     // If order is being canceled, restore product stock for each variant
+//     if (status === "Canceled" && order.status !== "Canceled") {
+//       // for (const item of order.orderItems) {
+//       //   await Product.findOneAndUpdate(
+//       //     { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
+//       //     { $inc: { "variants.$.quantity": item.quantity } }, // Restore variant quantity
+//       //     { new: true }
+//       //   );
+//       // }
+//       for (const itm of cart) {
+//         await Product.findOneAndUpdate(
+//           { _id: itm._id, "variants.size": itm.size, "variants.color": itm.color },
+//           { $inc: { "variants.$.quantity": -itm.quantity } }
+//         );
+        
+//       }
+      
+//     }
+
+//     order.status = status;
+//     await order.save();
+//     res.status(200).json({ success: true, message: `Order status updated to ${status}`, order });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Failed to update order status" });
+//   }
+// };
 exports.updateOrderStatus = async (req, res) => {
   const { orderId } = req.params;
   const { status } = req.body;
 
-  if (!["Pending", "Delivered", "Canceled"].includes(status)) {
+  console.log('Received status:', status);  // Log the received status
+
+  if (!["Pending", "Delivered", "Cancelled"].includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
@@ -424,30 +469,42 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-    // If order is being canceled, restore product stock for each variant
-    if (status === "Canceled" && order.status !== "Canceled") {
-      // for (const item of order.orderItems) {
-      //   await Product.findOneAndUpdate(
-      //     { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
-      //     { $inc: { "variants.$.quantity": item.quantity } }, // Restore variant quantity
-      //     { new: true }
-      //   );
-      // }
-      for (const itm of cart) {
+    if (status === "Cancelled" && order.status !== "Cancelled") {
+      for (const item of order.orderItems) {
+        console.log(`Attempting to restore stock for product: ${item.productId}, size: ${item.size}, color: ${item.color}`);
+
+        const product = await Product.findOne({
+          _id: item.productId,
+          "variants.size": item.size,
+          "variants.color": item.color,
+        });
+
+        if (!product) {
+          console.log(`Product not found for order item: ${item.productId} with size: ${item.size} and color: ${item.color}`);
+          continue;
+        }
+
+        // await Product.findOneAndUpdate(
+        //   { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
+        //   { $inc: { "variants.$.quantity": item.quantity } },
+        //   { new: true }
+        // );
         await Product.findOneAndUpdate(
-          { _id: itm._id, "variants.size": itm.size, "variants.color": itm.color },
-          { $inc: { "variants.$.quantity": -itm.quantity } }
+          { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
+          { $inc: { "variants.$.quantity": item.quantity } },  // Restore variant quantity
+          { new: true }
         );
-        
+
+        console.log(`Successfully restored quantity for product: ${item.productId} with size: ${item.size} and color: ${item.color}`);
       }
-      
     }
 
     order.status = status;
     await order.save();
     res.status(200).json({ success: true, message: `Order status updated to ${status}`, order });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Failed to update order status" });
+    console.error("Error updating order status:", error.message);
+    res.status(500).json({ success: false, message: "Failed to update order status", error: error.message });
   }
 };
+

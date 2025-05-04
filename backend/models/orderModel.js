@@ -5,6 +5,8 @@ const orderItemSchema = new mongoose.Schema({
     title: { type: String, required: true }, // Add title here
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
+  size: { type: String, required: true },   // Ensure size is part of the schema
+  color: { type: String, required: true },  // Ensure color is part of the schema
 });
 
 
@@ -20,7 +22,7 @@ const orderSchema = new mongoose.Schema({
     notes: { type: String },
     paymentMethod: { type: String, required: true },
   },
-  status: { type: String, enum: ["Pending", "Delivered", "Canceled"], default: "Pending" },
+  status: { type: String, enum: ["Pending", "Delivered", "Cancelled"], default: "Pending" },
 });
 
 module.exports = mongoose.model("Order", orderSchema);
