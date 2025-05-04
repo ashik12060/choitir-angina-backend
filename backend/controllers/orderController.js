@@ -106,6 +106,107 @@ const Product = require("../models/productModel"); // Adjust the path as needed
 // };
 
 
+// exports.createOrder = async (req, res) => {
+//   const decoded = jwt.decode(req.headers.authorization, process.env.JWT_SECRET);
+//   const orderDate = new Date();
+
+//   // Destructure customer details from the request body
+//   const { name, address, phone, deliveryMethod, notes, paymentMethod, cart } = req.body;
+
+//   try {
+//     // Check stock before placing the order
+//     for (const itm of cart) {
+//       const product = await Product.findById(itm._id);
+//       if (!product) {
+//         return res.status(404).json({ success: false, message: `Product not found for ${itm.title}` });
+//       }
+
+//       // Find the correct variant based on size & color
+//       const variant = product.variants.find((v) => v.size === itm.size && v.color === itm.color);
+//       if (!variant) {
+//         return res.status(404).json({ success: false, message: `Variant not found for ${itm.title}` });
+//       }
+
+//       // Ensure enough stock is available
+//       if (variant.quantity < itm.quantity) {
+//         return res.status(400).json({ success: false, message: `Not enough stock for ${itm.title} (Size: ${itm.size}, Color: ${itm.color})` });
+//       }
+//     }
+
+//     // Reduce product stock (variant-wise)
+//     // for (const itm of cart) {
+//     //   await Product.findOneAndUpdate(
+//     //     { _id: itm._id, "variants.size": itm.size, "variants.color": itm.color },
+//     //     { $inc: { "variants.$.quantity": -itm.quantity } }, // Reduce quantity
+//     //     { new: true }
+//     //   );
+//     // }
+//     for (const itm of cart) {
+//       const product = await Product.findById(itm._id);
+//       if (!product) continue;
+    
+//       const variantIndex = product.variants.findIndex(
+//         (v) => v.size === itm.size && v.color === itm.color
+//       );
+    
+//       if (variantIndex !== -1) {
+//         product.variants[variantIndex].quantity -= itm.quantity;
+//         if (product.variants[variantIndex].quantity < 0) {
+//           return res.status(400).json({
+//             success: false,
+//             message: `Insufficient stock for ${itm.title} (Size: ${itm.size}, Color: ${itm.color})`,
+//           });
+//         }
+//       }
+
+      
+//   console.log(`Before update - ${product.title}:`, product.variants[variantIndex]);
+
+//   product.variants[variantIndex].quantity -= itm.quantity;
+
+//   console.log(`After update - ${product.title}:`, product.variants[variantIndex]);
+    
+//       await product.save();
+//     }
+    
+
+//     // Prepare order items
+//     const orderItems = cart.map((itm) => ({
+//       productId: itm._id,
+//       size: itm.size,
+//       color: itm.color,
+//       quantity: itm.quantity,
+//       title: itm.title,
+//       price: itm.price,
+//     }));
+
+//     const newOrder = new Order({
+//       userId: decoded.id,
+//       orderDate,
+//       orderItems,
+//       customerDetails: {
+//         name,
+//         address,
+//         phone,
+//         deliveryMethod,
+//         notes,
+//         paymentMethod,
+//       },
+//       status: "Pending",
+//     });
+
+//     await newOrder.save();
+//     res.status(201).json({ success: true, message: "Order placed successfully", order: newOrder });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Failed to place order" });
+//   }
+// };
+
+
+// Fetch all orders with populated product details
+
+
 exports.createOrder = async (req, res) => {
   const decoded = jwt.decode(req.headers.authorization, process.env.JWT_SECRET);
   const orderDate = new Date();
@@ -133,13 +234,19 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Reduce product stock (variant-wise)
+    // Reduce product stock (variant-wise) (this is where you use the new code)
     for (const itm of cart) {
-      await Product.findOneAndUpdate(
+      const updatedProduct = await Product.findOneAndUpdate(
         { _id: itm._id, "variants.size": itm.size, "variants.color": itm.color },
-        { $inc: { "variants.$.quantity": -itm.quantity } }, // Reduce quantity
+        { $inc: { "variants.$.quantity": -itm.quantity } },
         { new: true }
       );
+
+      if (!updatedProduct) {
+        console.log(`❌ Failed to update stock for ${itm.title}`);
+      } else {
+        console.log(`✅ Stock updated for ${itm.title}`);
+      }
     }
 
     // Prepare order items
@@ -176,7 +283,8 @@ exports.createOrder = async (req, res) => {
 };
 
 
-// Fetch all orders with populated product details
+
+
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
@@ -318,13 +426,21 @@ exports.updateOrderStatus = async (req, res) => {
 
     // If order is being canceled, restore product stock for each variant
     if (status === "Canceled" && order.status !== "Canceled") {
-      for (const item of order.orderItems) {
+      // for (const item of order.orderItems) {
+      //   await Product.findOneAndUpdate(
+      //     { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
+      //     { $inc: { "variants.$.quantity": item.quantity } }, // Restore variant quantity
+      //     { new: true }
+      //   );
+      // }
+      for (const itm of cart) {
         await Product.findOneAndUpdate(
-          { _id: item.productId, "variants.size": item.size, "variants.color": item.color },
-          { $inc: { "variants.$.quantity": item.quantity } }, // Restore variant quantity
-          { new: true }
+          { _id: itm._id, "variants.size": itm.size, "variants.color": itm.color },
+          { $inc: { "variants.$.quantity": -itm.quantity } }
         );
+        
       }
+      
     }
 
     order.status = status;

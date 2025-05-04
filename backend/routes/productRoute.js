@@ -31,6 +31,9 @@ router.put('/addlike/product/:id', isAuthenticated, addLike);
 
 router.put('/removelike/product/:id', isAuthenticated, removeLike);
 
+router.put('/product/update-quantity/:id', isAuthenticated, updateProductQuantity);
+
+
 
 
 
