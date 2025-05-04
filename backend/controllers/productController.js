@@ -615,32 +615,65 @@ exports.getProductsByCategory = async (req, res, next) => {
   }
 };
 
+// exports.updateProductQuantity = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { quantity } = req.body; // The quantity to subtract
+
+//     // Find the product by ID
+//     const product = await Product.findById(id);
+
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+
+//     // Ensure the quantity is valid (not negative)
+//     if (product.quantity - quantity < 0) {
+//       return res.status(400).json({ message: "Not enough stock" });
+//     }
+
+//     // Decrease the product's quantity by the requested amount
+//     product.quantity -= quantity;
+
+//     // Save the updated product to the database
+//     await product.save();
+
+//     res.status(200).json({ message: "Product quantity updated", product });
+//   } catch (error) {
+//     console.error("Error updating product quantity", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.updateProductQuantity = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { quantity } = req.body; // The quantity to subtract
+    const { id } = req.params; // Product ID
+    const { barcode, quantity } = req.body; // barcode of the variant and quantity to subtract
 
-    // Find the product by ID
     const product = await Product.findById(id);
-
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Ensure the quantity is valid (not negative)
-    if (product.quantity - quantity < 0) {
-      return res.status(400).json({ message: "Not enough stock" });
+    const variant = product.variants.find(v => v.barcode === barcode);
+    if (!variant) {
+      return res.status(404).json({ message: "Variant not found" });
     }
 
-    // Decrease the product's quantity by the requested amount
-    product.quantity -= quantity;
+    if (variant.quantity - quantity < 0) {
+      return res.status(400).json({ message: "Not enough stock for this variant" });
+    }
 
-    // Save the updated product to the database
+    variant.quantity -= quantity;
+
     await product.save();
 
-    res.status(200).json({ message: "Product quantity updated", product });
+    res.status(200).json({
+      message: "Variant quantity updated",
+      updatedVariant: variant,
+    });
   } catch (error) {
-    console.error("Error updating product quantity", error);
+    console.error("Error updating variant quantity", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -41,6 +41,8 @@ const salesSchema = new mongoose.Schema({
       title: { type: String, required: true },
       quantity: { type: Number, required: true },
       price: { type: Number, required: true },
+      size: String, 
+      color: String, 
       // type: { type: String, enum: ["Stitched", "Unstitched"], required: true },
       status: { type: String, enum: ["Pending", "Sold Out", "Canceled"], default: "Pending" },
     },
