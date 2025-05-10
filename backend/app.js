@@ -14,6 +14,7 @@ const rateLimit = require('express-rate-limit')
 const hpp = require('hpp');
 const axios = require('axios');
 const admin = require('firebase-admin');
+const timeout = require('connect-timeout');
 
 // firebase
 const serviceAccount = require('./config/serviceAccountKey.json');
@@ -51,10 +52,7 @@ const shopRoutes = require('./routes/shopRoutes')
 const warehouseProduct = require('./routes/warehouseCleanRoutes')
 const salesWarehouseProduct = require('./routes/salesWarehouseRoute')
 
-// firebase initialization
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
+
 
 //database connection
 mongoose.connect(process.env.DATABASE, {
@@ -69,14 +67,16 @@ mongoose.connect(process.env.DATABASE, {
 
 
 //MIDDLEWARE
+app.use(timeout('10m'));
 app.use(morgan('dev'));
-app.use(bodyParser.json({ limit: "5mb" }));
+app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({
-  limit: "5mb",
+  limit: "50mb",
   extended: true
 }));
 app.use(cookieParser());
 app.use(cors());
+
 
 app.use(cors({
   origin: [process.env.PUBLIC_SITE_URL, process.env.LOCAL_SITE_URL]
@@ -103,6 +103,7 @@ const limiter = rateLimit({
   standardHeaders: true, 
   legacyHeaders: false, 
 })
+app.use(limiter);
 
 
 app.use(hpp());
