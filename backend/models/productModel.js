@@ -11,6 +11,7 @@ const variantSchema = new mongoose.Schema({
   productLength: { type: Number, default: 0 },
   subBarcode: String,
   subBarcodeSvg: String,
+  image: String,
 });
 
 const productSchema = new mongoose.Schema(
@@ -69,13 +70,13 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
     barcodeNumber: { type: String }, // Custom barcode number
-    images: [
-      {
-        url: String,
-        public_id: String,
-        color: String,
-      },
-    ],
+    // images: [
+    //   {
+    //     url: String,
+    //     public_id: String,
+    //     color: String,
+    //   },
+    // ],
     likes: [{ type: ObjectId, ref: "User" }],
     comments: [
       {
