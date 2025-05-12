@@ -11,7 +11,9 @@ const variantSchema = new mongoose.Schema({
   productLength: { type: Number, default: 0 },
   subBarcode: String,
   subBarcodeSvg: String,
-  image: String,
+  // image: String,
+  imageUrl: String,
+  imagePublicId: String,
 });
 
 const productSchema = new mongoose.Schema(
@@ -21,8 +23,7 @@ const productSchema = new mongoose.Schema(
       required: [true, "title is required"],
     },
     
-    // shop 
-    // shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
+   
     shop: [{ type: mongoose.Schema.Types.ObjectId, ref: "Shop" }],
 
     
@@ -70,13 +71,7 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
     barcodeNumber: { type: String }, // Custom barcode number
-    // images: [
-    //   {
-    //     url: String,
-    //     public_id: String,
-    //     color: String,
-    //   },
-    // ],
+   
     likes: [{ type: ObjectId, ref: "User" }],
     comments: [
       {

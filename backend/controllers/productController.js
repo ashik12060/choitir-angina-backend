@@ -190,79 +190,79 @@ const mongoose = require("mongoose");
 //     next(error);
 //   }
 // };
+
 exports.createPostProduct = async (req, res, next) => {
   const {
     title,
     content,
     price,
     description,
-    brand, 
-    subcategory, 
+    brand,
+    subcategory,
     supplier,
     categories,
     variants,
-    barcode, 
-    images, 
+    barcode,
   } = req.body;
 
   try {
+    // 1. Check supplier exists
     const supplierExists = await Supplier.findById(supplier);
     if (!supplierExists) {
       return res.status(400).json({ message: "Supplier does not exist" });
     }
 
-    // 1. Upload product images
-    const imageUploadPromises = images.map(async (imageData) => {
-      const { image, colorName } = imageData;
-      const result = await cloudinary.uploader.upload(image, {
-        folder: "products",
-        width: 1200,
-        crop: "scale",
-      });
-      return {
-        url: result.secure_url,
-        public_id: result.public_id,
-        color: colorName,
-      };
-    });
-
-    const uploadedImages = await Promise.all(imageUploadPromises);
-
-    // 2. Generate barcode image for each variant
-    const variantsWithBarcodeImages = await Promise.all(
+    // 2. Upload variant image & generate sub-barcode if present
+    const processedVariants = await Promise.all(
       variants.map(async (variant) => {
-        if (!variant.subBarcode) return variant; // Change from `barcode` to `subBarcode`
+        let imageUrl = null;
+        let imagePublicId = null;
 
-        const variantBuffer = await bwipjs.toBuffer({
-          bcid: "code128",
-          text: variant.subBarcode, // Change `barcode` to `subBarcode`
-          scale: 3,
-          height: 10,
-          includetext: true,
-          textxalign: "center",
-        });
+        if (variant.image) {
+          const result = await cloudinary.uploader.upload(variant.image, {
+            folder: "product-variants",
+            width: 1200,
+            crop: "scale",
+          });
+          imageUrl = result.secure_url;
+          imagePublicId = result.public_id;
+        }
+
+        let subBarcodeSvg = null;
+        if (variant.subBarcode) {
+          const barcodeBuffer = await bwipjs.toBuffer({
+            bcid: "code128",
+            text: variant.subBarcode,
+            scale: 3,
+            height: 10,
+            includetext: true,
+            textxalign: "center",
+          });
+          subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+        }
 
         return {
           ...variant,
-          subBarcodeSvg: `data:image/png;base64,${variantBuffer.toString("base64")}`, // Change the key name to match
+          imageUrl,
+          imagePublicId,
+          subBarcodeSvg,
         };
       })
     );
 
-    // 3. Generate main product barcode image
-    const barcodeData = barcode || new mongoose.Types.ObjectId().toString();  
+    // 3. Generate main product barcode
+    const barcodeData = barcode || new mongoose.Types.ObjectId().toString();
     const barcodeBuffer = await bwipjs.toBuffer({
-      bcid: "code128", 
-      text: barcodeData.toString(), 
-      scale: 3, 
-      height: 10, 
-      includetext: true, 
-      textxalign: "center", 
+      bcid: "code128",
+      text: barcodeData.toString(),
+      scale: 3,
+      height: 10,
+      includetext: true,
+      textxalign: "center",
     });
-
     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
 
-    // 4. Save product
+    // 4. Create product
     const product = await Product.create({
       title,
       content,
@@ -272,11 +272,10 @@ exports.createPostProduct = async (req, res, next) => {
       subcategory,
       postedBy: req.user._id,
       supplier,
-      variants: variantsWithBarcodeImages, // Use updated variants with barcode images
       categories,
-      images: uploadedImages, 
       barcode: barcodeBase64,
-      barcodeNumber: barcode, 
+      barcodeNumber: barcode,
+      variants: processedVariants,
     });
 
     res.status(201).json({
@@ -288,6 +287,106 @@ exports.createPostProduct = async (req, res, next) => {
     next(error);
   }
 };
+
+
+// exports.createPostProduct = async (req, res, next) => {
+//   const {
+//     title,
+//     content,
+//     price,
+//     description,
+//     brand, 
+//     subcategory, 
+//     supplier,
+//     categories,
+//     variants,
+//     barcode, 
+//     images, 
+//   } = req.body;
+
+//   try {
+//     const supplierExists = await Supplier.findById(supplier);
+//     if (!supplierExists) {
+//       return res.status(400).json({ message: "Supplier does not exist" });
+//     }
+
+//     // 1. Upload product images
+//     const imageUploadPromises = images.map(async (imageData) => {
+//       const { image, colorName } = imageData;
+//       const result = await cloudinary.uploader.upload(image, {
+//         folder: "products",
+//         width: 1200,
+//         crop: "scale",
+//       });
+//       return {
+//         url: result.secure_url,
+//         public_id: result.public_id,
+//         color: colorName,
+//       };
+//     });
+
+//     const uploadedImages = await Promise.all(imageUploadPromises);
+
+//     // 2. Generate barcode image for each variant
+//     const variantsWithBarcodeImages = await Promise.all(
+//       variants.map(async (variant) => {
+//         if (!variant.subBarcode) return variant; // Change from `barcode` to `subBarcode`
+
+//         const variantBuffer = await bwipjs.toBuffer({
+//           bcid: "code128",
+//           text: variant.subBarcode, // Change `barcode` to `subBarcode`
+//           scale: 3,
+//           height: 10,
+//           includetext: true,
+//           textxalign: "center",
+//         });
+
+//         return {
+//           ...variant,
+//           subBarcodeSvg: `data:image/png;base64,${variantBuffer.toString("base64")}`, // Change the key name to match
+//         };
+//       })
+//     );
+
+//     // 3. Generate main product barcode image
+//     const barcodeData = barcode || new mongoose.Types.ObjectId().toString();  
+//     const barcodeBuffer = await bwipjs.toBuffer({
+//       bcid: "code128", 
+//       text: barcodeData.toString(), 
+//       scale: 3, 
+//       height: 10, 
+//       includetext: true, 
+//       textxalign: "center", 
+//     });
+
+//     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+
+//     // 4. Save product
+//     const product = await Product.create({
+//       title,
+//       content,
+//       price,
+//       description,
+//       brand,
+//       subcategory,
+//       postedBy: req.user._id,
+//       supplier,
+//       variants: variantsWithBarcodeImages, // Use updated variants with barcode images
+//       categories,
+//       images: uploadedImages, 
+//       barcode: barcodeBase64,
+//       barcodeNumber: barcode, 
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     next(error);
+//   }
+// };
 
 
 
@@ -336,21 +435,59 @@ exports.showProduct = async (req, res, next) => {
   }
 };
 
-// single product
+// // single product
+// exports.showSingleProduct = async (req, res, next) => {
+//   try {
+//     const product = await Product.findById(req.params.id).populate(
+//       "comments.postedBy",
+//       "name"
+//     );
+//     res.status(200).json({
+//       success: true,
+//       product,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 exports.showSingleProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id).populate(
       "comments.postedBy",
       "name"
     );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
     res.status(200).json({
       success: true,
       product,
     });
   } catch (error) {
-    next(error);
+    // You can log the error for debugging purposes
+    console.error(error);
+
+    // Handle cases where the ID is invalid or database errors occur
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID format",
+      });
+    }
+
+    // Catch all other errors
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+
 
 // Delete showProduct
 exports.deleteProduct = async (req, res, next) => {
