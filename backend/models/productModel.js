@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 const { Schema } = mongoose;
 
-
 const variantSchema = new mongoose.Schema({
   size: { type: String, required: true },
   color: { type: String, required: true },
@@ -11,7 +10,6 @@ const variantSchema = new mongoose.Schema({
   productLength: { type: Number, default: 0 },
   subBarcode: String,
   subBarcodeSvg: String,
-  // image: String,
   imageUrl: String,
   imagePublicId: String,
 });
@@ -22,11 +20,9 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "title is required"],
     },
-    
-   
+
     shop: [{ type: mongoose.Schema.Types.ObjectId, ref: "Shop" }],
 
-    
     content: {
       type: String,
       required: [true, "content is required"],
@@ -36,18 +32,13 @@ const productSchema = new mongoose.Schema(
       required: [false, "content is required"],
     },
 
-   
-
     price: {
       type: Number,
       required: [true, "price is required"],
     },
-   
 
-    variants: [variantSchema], 
+    variants: [variantSchema],
 
-   
-  
     postedBy: {
       type: ObjectId,
       ref: "User",
@@ -62,7 +53,7 @@ const productSchema = new mongoose.Schema(
     categories: [
       {
         type: String,
-        enum: ["All", "Top Brands", "New Arrival", "Unstitched"],
+        enum: ["All", "Top Brands", "New Arrival", "Stitched", "Unstitched"],
         required: [true, "Category is required"],
       },
     ],
@@ -71,7 +62,7 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
     barcodeNumber: { type: String }, // Custom barcode number
-   
+
     likes: [{ type: ObjectId, ref: "User" }],
     comments: [
       {
