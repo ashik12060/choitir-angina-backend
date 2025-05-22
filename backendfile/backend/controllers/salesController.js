@@ -47,7 +47,6 @@ exports.createSale = async (req, res) => {
       vatAmount,
       netPayable,
       paymentMethod,
-      cardNumber,
     } = req.body;
 
     // Loop through each product in the sale
@@ -97,10 +96,7 @@ exports.createSale = async (req, res) => {
     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
       saleData.customerInfo = customerInfo;
     }
-  // 🆕 Conditionally include cardNumber if payment method is Card
-    if (paymentMethod === "Card" && cardNumber) {
-      saleData.cardNumber = cardNumber;
-    }
+
     const sale = new Sale(saleData);
     await sale.save();
 

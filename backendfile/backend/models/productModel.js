@@ -7,7 +7,7 @@ const variantSchema = new mongoose.Schema({
   size: { type: String, required: true },
   color: { type: String, required: true },
   quantity: { type: Number, default: 0 },
-  productLength: { type: Number, required: false },
+  productLength: { type: Number, default: 0 },
   subBarcode: String,
   subBarcodeSvg: String,
   imageUrl: String,
