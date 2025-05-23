@@ -69,9 +69,9 @@ mongoose.connect(process.env.DATABASE, {
 //MIDDLEWARE
 app.use(timeout('10m'));
 app.use(morgan('dev'));
-app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({
-  limit: "50mb",
+  limit: "100mb",
   extended: true
 }));
 app.use(cookieParser());
