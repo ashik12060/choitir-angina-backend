@@ -8,11 +8,13 @@ const mongoose = require("mongoose");
 
 
 exports.createPostProduct = async (req, res, next) => {
+
   const {
     title,
     content,
     price,
-    description,
+    // description,
+
     brand,
     subcategory,
     supplier,
@@ -20,6 +22,8 @@ exports.createPostProduct = async (req, res, next) => {
     variants,
     barcode,
   } = req.body;
+
+  console.log("Request body:", req.body);// <-- Add here
 
   try {
     // 1. Check supplier exists
@@ -79,11 +83,14 @@ exports.createPostProduct = async (req, res, next) => {
     const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
 
     // 4. Create product
+
     const product = await Product.create({
       title,
+      
       content,
       price,
-      description,
+      // description,
+      
       brand,
       subcategory,
       postedBy: req.user._id,
@@ -97,6 +104,7 @@ exports.createPostProduct = async (req, res, next) => {
     res.status(201).json({
       success: true,
       product,
+      
     });
   } catch (error) {
     console.error(error);
@@ -229,6 +237,7 @@ exports.updateProduct = async (req, res, next) => {
   try {
     const {
       title,
+      titlebrand,
       content,
       price,
       sizes,
@@ -251,6 +260,7 @@ exports.updateProduct = async (req, res, next) => {
     // Build the updated product data
     const data = {
       title: title || currentProduct.title,
+      title: titlebrand || currentProduct.titlebrand,
       content: content || currentProduct.content,
       price: price || currentProduct.price,
       quantity: updatedQuantity, // Set updated quantity here
