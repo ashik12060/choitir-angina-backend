@@ -7,10 +7,7 @@ const variantSchema = new mongoose.Schema({
   size: { type: String, required: true },
   color: { type: String, required: true },
   description: { type: String, required: true },
-  // description: {
-  //     type: String,
-  //     required: [false, "content is required"],
-  //   },
+
   quantity: { type: Number, default: 0 },
   productLength: { type: Number, required: false },
   subBarcode: String,
@@ -32,10 +29,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "content is required"],
     },
-    // description: {
-    //   type: String,
-    //   required: [false, "content is required"],
-    // },
+   
 
     price: {
       type: Number,

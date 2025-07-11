@@ -47,6 +47,7 @@ const attendanceRoute = require('./routes/attendanceRoutes')
 const employeeRoute = require('./routes/employeeRoutes')
 const brandRoute = require('./routes/brandRoutes')
 const salesRoute = require('./routes/salesRoute')
+const bookingRoute = require('./routes/bookingRoute')
 const subCategoryRoute = require('./routes/subCategoryRoute')
 const shopRoutes = require('./routes/shopRoutes')
 const warehouseProduct = require('./routes/warehouseCleanRoutes')
@@ -123,6 +124,7 @@ app.use('/api', attendanceRoute);
 app.use('/api', employeeRoute);
 app.use('/api', brandRoute);
 app.use('/api', salesRoute);
+app.use('/api', bookingRoute);
 app.use('/api', subCategoryRoute);
 app.use('/api', shopRoutes);
 app.use('/api', warehouseProduct);

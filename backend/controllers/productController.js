@@ -3,27 +3,24 @@ const Product = require("../models/productModel");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../app");
 const Supplier = require("../models/SupplierModel");
-const bwipjs = require("bwip-js"); 
+const bwipjs = require("bwip-js");
 const mongoose = require("mongoose");
 
-
 exports.createPostProduct = async (req, res, next) => {
-
   const {
     title,
     content,
     price,
-    // description,
-
-    brand,
-    subcategory,
+    brandsname,
+    // brand,
+    // subcategory,
     supplier,
     categories,
     variants,
     barcode,
   } = req.body;
 
-  console.log("Request body:", req.body);// <-- Add here
+  console.log("Request body:", req.body); // <-- Add here
 
   try {
     // 1. Check supplier exists
@@ -58,7 +55,9 @@ exports.createPostProduct = async (req, res, next) => {
             includetext: true,
             textxalign: "center",
           });
-          subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+          subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString(
+            "base64"
+          )}`;
         }
 
         return {
@@ -80,19 +79,19 @@ exports.createPostProduct = async (req, res, next) => {
       includetext: true,
       textxalign: "center",
     });
-    const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+    const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString(
+      "base64"
+    )}`;
 
     // 4. Create product
 
     const product = await Product.create({
       title,
-      
       content,
+      brandsname,
       price,
-      // description,
-      
-      brand,
-      subcategory,
+      // brand,
+      // subcategory,
       postedBy: req.user._id,
       supplier,
       categories,
@@ -104,7 +103,6 @@ exports.createPostProduct = async (req, res, next) => {
     res.status(201).json({
       success: true,
       product,
-      
     });
   } catch (error) {
     console.error(error);
@@ -112,15 +110,14 @@ exports.createPostProduct = async (req, res, next) => {
   }
 };
 
-
 exports.assignProductToShop = async (req, res) => {
   const { productIds, shopId } = req.body;
   try {
     const products = await Product.updateMany(
       { _id: { $in: productIds } },
       { shop: shopId }
-    );  
-    res.status(200).json({ message: 'Products assigned to shop', products });
+    );
+    res.status(200).json({ message: "Products assigned to shop", products });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -131,15 +128,12 @@ exports.getProductsByShop = async (req, res) => {
   const { shopId } = req.params;
 
   try {
-    const products = await Product.find({ shop: shopId }).populate('shop');
+    const products = await Product.find({ shop: shopId }).populate("shop");
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-
 
 // single product
 exports.showProduct = async (req, res, next) => {
@@ -179,7 +173,7 @@ exports.showSingleProduct = async (req, res, next) => {
     console.error(error);
 
     // Handle cases where the ID is invalid or database errors occur
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
         message: "Invalid product ID format",
@@ -194,13 +188,14 @@ exports.showSingleProduct = async (req, res, next) => {
   }
 };
 
-
 exports.deleteProduct = async (req, res, next) => {
   try {
     const currentProduct = await Product.findById(req.params.id);
 
     if (!currentProduct) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     // Only attempt to delete if imagePublicId is actually present
@@ -210,7 +205,9 @@ exports.deleteProduct = async (req, res, next) => {
           try {
             await cloudinary.uploader.destroy(variant.imagePublicId);
           } catch (err) {
-            console.warn(`Could not delete image from Cloudinary: ${variant.imagePublicId}`);
+            console.warn(
+              `Could not delete image from Cloudinary: ${variant.imagePublicId}`
+            );
           }
         }
       }
@@ -228,10 +225,6 @@ exports.deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
-
-
-
-
 
 exports.updateProduct = async (req, res, next) => {
   try {
@@ -301,13 +294,6 @@ exports.updateProduct = async (req, res, next) => {
     next(error);
   }
 };
-
-
-
-
-
-
-
 
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
@@ -427,7 +413,6 @@ exports.getProductsByCategory = async (req, res, next) => {
   }
 };
 
-
 exports.updateProductQuantity = async (req, res) => {
   try {
     const { id } = req.params; // Product ID
@@ -438,13 +423,15 @@ exports.updateProductQuantity = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    const variant = product.variants.find(v => v.barcode === barcode);
+    const variant = product.variants.find((v) => v.barcode === barcode);
     if (!variant) {
       return res.status(404).json({ message: "Variant not found" });
     }
 
     if (variant.quantity - quantity < 0) {
-      return res.status(400).json({ message: "Not enough stock for this variant" });
+      return res
+        .status(400)
+        .json({ message: "Not enough stock for this variant" });
     }
 
     variant.quantity -= quantity;

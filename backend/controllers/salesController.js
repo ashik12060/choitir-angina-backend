@@ -2,41 +2,6 @@ const Sale = require('../models/salesModel');
 const Product = require("../models/productModel"); // Adjust path if needed
 
 
-// exports.createSale = async (req, res) => {
-//   try {
-//     const { products, customerInfo, totalPrice, discountAmount, vatAmount, netPayable, paymentMethod } = req.body;
-
-//     // Create the sale object
-//     const saleData = {
-//       products,
-//       totalPrice,
-//       discountAmount,
-//       vatAmount,
-//       netPayable,
-//       paymentMethod,
-//     };
-
-//     // Only include customerInfo if it's provided
-//     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
-//       saleData.customerInfo = customerInfo;
-//     }
-
-//     // Save the sale to the database
-//     const sale = new Sale(saleData);
-//     await sale.save();
-
-//     return res.status(201).json({ message: 'Sale created successfully', sale });
-//   } catch (error) {
-//     return res.status(500).json({ message: 'Error creating sale', error });
-//   }
-// };
-
-
-
-
-// Get All Sales
-
-
 exports.createSale = async (req, res) => {
   try {
     const {
