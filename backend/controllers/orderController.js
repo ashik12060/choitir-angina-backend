@@ -286,15 +286,33 @@ exports.createOrder = async (req, res) => {
 
 
 
+// exports.getAllOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find()
+//       .populate('orderItems.productId', 'name price') // Populate product name and price
+//       .exec();
+//     res.status(200).json({ success: true, orders });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Failed to fetch orders" });
+//   }
+// };
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('orderItems.productId', 'name price') // Populate product name and price
-      .exec();
-    res.status(200).json({ success: true, orders });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Failed to fetch orders" });
+    const { from, to } = req.query;
+    const filter = {};
+
+    if (from && to) {
+      filter.orderDate = {
+        $gte: new Date(from),
+        $lte: new Date(to + 'T23:59:59.999Z'),
+      };
+    }
+
+    const orders = await Order.find(filter);
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
   }
 };
 

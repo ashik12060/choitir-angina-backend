@@ -12,8 +12,7 @@ exports.createPostProduct = async (req, res, next) => {
     content,
     price,
     brandsname,
-    // brand,
-    // subcategory,
+    
     supplier,
     categories,
     variants,
@@ -226,74 +225,217 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
+
+// exports.updateProduct = async (req, res, next) => {
+//   try {
+//     const {
+//       title,
+//       titlebrand,
+//       content,
+//       price,
+//       sizes,
+//       quantity,
+//       brand,
+//       subcategory
+//     } = req.body;
+
+//     const currentProduct = await Product.findById(req.params.id);
+//     if (!currentProduct) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+
+//     const updatedQuantity =
+//       quantity !== undefined ? quantity : currentProduct.quantity - 1;
+
+//     const data = {
+//       title: title || currentProduct.title,
+//       titlebrand: titlebrand || currentProduct.titlebrand,
+//       content: content || currentProduct.content,
+//       price: price || currentProduct.price,
+//       quantity: updatedQuantity,
+//       brand: brand || currentProduct.brand,
+//       sizes: sizes || currentProduct.sizes,
+//       subcategory: subcategory || currentProduct.subcategory,
+//     };
+
+//     // Handle images if new images uploaded
+//     if (req.files && req.files.length > 0) {
+//       // Optional: remove old images from Cloudinary
+//       if (currentProduct.images && currentProduct.images.length > 0) {
+//         for (let img of currentProduct.images) {
+//           if (img.public_id) {
+//             await cloudinary.uploader.destroy(img.public_id);
+//           }
+//         }
+//       }
+
+//       const uploadedImages = [];
+//       for (const file of req.files) {
+//         const uploadResult = await cloudinary.uploader.upload_stream(
+//           {
+//             folder: "products",
+//             resource_type: "image",
+//           },
+//           (error, result) => {
+//             if (error) {
+//               console.error("Cloudinary upload error:", error);
+//               throw error;
+//             }
+//             uploadedImages.push({
+//               public_id: result.public_id,
+//               url: result.secure_url,
+//             });
+//           }
+//         );
+
+//         // Stream the file buffer
+//         const stream = cloudinary.uploader.upload_stream(uploadResult);
+//         stream.end(file.buffer);
+//       }
+//       data.images = uploadedImages;
+//     }
+
+//     const productUpdate = await Product.findByIdAndUpdate(
+//       req.params.id,
+//       data,
+//       { new: true }
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       productUpdate,
+//     });
+//   } catch (error) {
+//     console.error("Update product error:", error);
+//     next(error);
+//   }
+// };
+
+
 exports.updateProduct = async (req, res, next) => {
   try {
     const {
       title,
-      titlebrand,
       content,
       price,
-      sizes,
-      quantity, // If the quantity is passed in the request body, it will update to that
-      brand,
-      subcategory,
-      image,
+      brandsname,
+      supplier,
+      categories,
+      barcode,
+      variants,
     } = req.body;
 
-    const currentProduct = await Product.findById(req.params.id);
-
-    if (!currentProduct) {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Decrease the quantity by 1 when adding to the cart (if quantity is not provided in the request body)
-    const updatedQuantity =
-      quantity !== undefined ? quantity : currentProduct.quantity - 1;
-
-    // Build the updated product data
-    const data = {
-      title: title || currentProduct.title,
-      title: titlebrand || currentProduct.titlebrand,
-      content: content || currentProduct.content,
-      price: price || currentProduct.price,
-      quantity: updatedQuantity, // Set updated quantity here
-      brand: brand || currentProduct.brand,
-      sizes: sizes || currentProduct.sizes,
-      subcategory: subcategory || currentProduct.subcategory,
-      image: image || currentProduct.image,
-    };
-
-    // Modify product image if provided in the request body
-    if (req.body.image !== "") {
-      const ImgId = currentProduct.image.public_id;
-      if (ImgId) {
-        await cloudinary.uploader.destroy(ImgId);
+    if (supplier) {
+      const supplierExists = await Supplier.findById(supplier);
+      if (!supplierExists) {
+        return res.status(400).json({ message: "Supplier does not exist" });
       }
-
-      const newImage = await cloudinary.uploader.upload(req.body.image, {
-        folder: "products",
-        width: 1200,
-        crop: "scale",
-      });
-
-      data.image = {
-        public_id: newImage.public_id,
-        url: newImage.secure_url,
-      };
+      product.supplier = supplier;
     }
 
-    const productUpdate = await Product.findByIdAndUpdate(req.params.id, data, {
-      new: true,
-    });
+    if (title) product.title = title;
+    if (content) product.content = content;
+    if (price) product.price = price;
+    if (brandsname) product.brandsname = brandsname;
+    if (categories) product.categories = categories;
+
+    // Handle barcode
+    if (barcode) {
+      const barcodeBuffer = await bwipjs.toBuffer({
+        bcid: "code128",
+        text: barcode,
+        scale: 3,
+        height: 10,
+        includetext: true,
+        textxalign: "center",
+      });
+      product.barcode = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+      product.barcodeNumber = barcode;
+    }
+
+    // Parse variants
+    let parsedVariants = [];
+    if (variants) {
+      parsedVariants = typeof variants === "string" ? JSON.parse(variants) : variants;
+      const processedVariants = await Promise.all(
+        parsedVariants.map(async (variant) => {
+          let imageUrl = variant.imageUrl || null;
+          let imagePublicId = variant.imagePublicId || null;
+
+          if (variant.imageUrl && !variant.imagePublicId) {
+            const result = await cloudinary.uploader.upload(variant.imageUrl, {
+              folder: "product-variants",
+              width: 1200,
+              crop: "scale",
+            });
+            imageUrl = result.secure_url;
+            imagePublicId = result.public_id;
+          }
+
+          let subBarcodeSvg = variant.subBarcodeSvg || null;
+          if (variant.subBarcode) {
+            const barcodeBuffer = await bwipjs.toBuffer({
+              bcid: "code128",
+              text: variant.subBarcode,
+              scale: 3,
+              height: 10,
+              includetext: true,
+              textxalign: "center",
+            });
+            subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+          }
+
+          return {
+            ...variant,
+            imageUrl,
+            imagePublicId,
+            subBarcodeSvg,
+          };
+        })
+      );
+
+      product.variants = processedVariants;
+    }
+
+    // Handle main images if using `req.files`
+    if (req.files && req.files.length > 0) {
+      if (product.images && product.images.length > 0) {
+        for (const img of product.images) {
+          if (img.public_id) {
+            await cloudinary.uploader.destroy(img.public_id);
+          }
+        }
+      }
+
+      product.images = [];
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "products",
+        });
+        product.images.push({
+          public_id: result.public_id,
+          url: result.secure_url,
+        });
+      }
+    }
+
+    await product.save();
 
     res.status(200).json({
       success: true,
-      productUpdate,
+      product,
     });
   } catch (error) {
+    console.error("Update product error:", error);
     next(error);
   }
 };
+
 
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;

@@ -79,12 +79,30 @@ exports.createSale = async (req, res) => {
 
 
 
+// exports.getAllSales = async (req, res) => {
+//   try {
+//     const sales = await Sale.find();
+//     return res.status(200).json(sales);
+//   } catch (error) {
+//     return res.status(500).json({ message: 'Error retrieving sales', error });
+//   }
+// };
 exports.getAllSales = async (req, res) => {
   try {
-    const sales = await Sale.find();
-    return res.status(200).json(sales);
-  } catch (error) {
-    return res.status(500).json({ message: 'Error retrieving sales', error });
+    const { from, to } = req.query;
+    const filter = {};
+
+    if (from && to) {
+      filter.timestamp = {
+        $gte: new Date(from),
+        $lte: new Date(to + 'T23:59:59.999Z'),
+      };
+    }
+
+    const sales = await Sale.find(filter);
+    res.json(sales);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
   }
 };
 

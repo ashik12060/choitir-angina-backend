@@ -7,7 +7,7 @@ const { createOrder, getOrderById, getAllOrders, getOrdersByUserId, updateOrderS
 // Order routes
 router.post('/order/place', isAuthenticated, createOrder);
 router.get('/order/:userId', isAuthenticated, getOrderById);
-router.get('/orders', isAuthenticated, getAllOrders);
+router.get('/orders',  getAllOrders);
 router.get('/orders/user/:userId', isAuthenticated, getOrdersByUserId); // New route to get orders by user ID
 
 router.put('/order/:orderId/status', isAuthenticated, updateOrderStatus); 
