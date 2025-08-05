@@ -29,44 +29,97 @@ exports.createPostProduct = async (req, res, next) => {
     }
 
     // 2. Upload variant image & generate sub-barcode if present
+    // const processedVariants = await Promise.all(
+    //   variants.map(async (variant) => {
+    //     let imageUrl = null;
+    //     let imagePublicId = null;
+
+    //     if (variant.imageUrl) {
+    //       const result = await cloudinary.uploader.upload(variant.imageUrl, {
+    //         folder: "product-variants",
+    //         width: 1200,
+    //         crop: "scale",
+    //       });
+    //       imageUrl = result.secure_url;
+    //       imagePublicId = result.public_id;
+    //     }
+
+    //     let subBarcodeSvg = null;
+    //     if (variant.subBarcode) {
+    //       const barcodeBuffer = await bwipjs.toBuffer({
+    //         bcid: "code128",
+    //         text: variant.subBarcode,
+    //         scale: 3,
+    //         height: 10,
+    //         includetext: true,
+    //         textxalign: "center",
+    //       });
+    //       subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString(
+    //         "base64"
+    //       )}`;
+    //     }
+
+    //     return {
+    //       ...variant,
+    //       imageUrl,
+    //       imagePublicId,
+    //       subBarcodeSvg,
+    //     };
+    //   })
+    // );
+
+
     const processedVariants = await Promise.all(
-      variants.map(async (variant) => {
-        let imageUrl = null;
-        let imagePublicId = null;
+  variants.map(async (variant) => {
+    let imageUrl = null;
+    let imagePublicId = null;
 
-        if (variant.imageUrl) {
-          const result = await cloudinary.uploader.upload(variant.imageUrl, {
-            folder: "product-variants",
-            width: 1200,
-            crop: "scale",
-          });
-          imageUrl = result.secure_url;
-          imagePublicId = result.public_id;
-        }
+    if (variant.imageUrl) {
+      const result = await cloudinary.uploader.upload(variant.imageUrl, {
+        folder: "product-variants",
+        width: 1200,
+        crop: "scale",
+      });
+      imageUrl = result.secure_url;
+      imagePublicId = result.public_id;
+    }
 
-        let subBarcodeSvg = null;
-        if (variant.subBarcode) {
-          const barcodeBuffer = await bwipjs.toBuffer({
-            bcid: "code128",
-            text: variant.subBarcode,
-            scale: 3,
-            height: 10,
-            includetext: true,
-            textxalign: "center",
-          });
-          subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString(
-            "base64"
-          )}`;
-        }
+    let subBarcodeSvg = null;
+    if (variant.subBarcode) {
+      const barcodeBuffer = await bwipjs.toBuffer({
+        bcid: "code128",
+        text: variant.subBarcode,
+        scale: 3,
+        height: 10,
+        includetext: true,
+        textxalign: "center",
+      });
+      subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+    }
 
-        return {
-          ...variant,
-          imageUrl,
-          imagePublicId,
-          subBarcodeSvg,
-        };
-      })
-    );
+    // ✅ Check if category includes "Stitched"
+    const isStitched = categories.includes("Stitched");
+
+    // ✅ Validation
+    if (isStitched) {
+      if (!variant.multipleSizes || variant.multipleSizes.length === 0) {
+        throw new Error("Stitched variants must have multipleSizes");
+      }
+    } else {
+      if (!variant.size || typeof variant.quantity !== "number") {
+        throw new Error("Unstitched variants must have size and quantity");
+      }
+    }
+
+    return {
+      ...variant,
+      imageUrl,
+      imagePublicId,
+      subBarcodeSvg,
+    };
+  })
+);
+
 
     // 3. Generate main product barcode
     const barcodeData = barcode || new mongoose.Types.ObjectId().toString();
@@ -121,6 +174,61 @@ exports.assignProductToShop = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Get all products by brand name
+// exports.getProductsByBrand = async (req, res, next) => {
+//   try {
+//     const brandId = req.params.brand;
+//     const products = await Product.find({ brand: brandId })
+//       .populate("brand", "name")
+//       .populate("supplier", "name")
+//       .populate("shop", "name");
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+
+// get products by title
+// exports.getProductsByTitle = async (req, res) => {
+//   try {
+//     const title = req.params.title;
+
+//     // Find all products with the given title
+//     const products = await Product.find({ title }).sort({ createdAt: -1 });
+
+//     res.status(200).json({ products });
+//   } catch (error) {
+//     console.error("Error fetching products by title:", error);
+//     res.status(500).json({ message: "Server error", error });
+//   }
+// };
+
+exports.getProductsByTitle = async (req, res) => {
+  try {
+    // Convert "emaan-adeel" → "emaan adeel"
+    const rawSlug = req.params.title;
+    const decodedTitle = rawSlug.replace(/-/g, "-");
+
+    // Use case-insensitive match
+    const products = await Product.find({
+      title: { $regex: new RegExp(`^${decodedTitle}$`, "i") },
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({ products });
+  } catch (error) {
+    console.error("Error fetching products by title:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
+
 
 // Get products by shop
 exports.getProductsByShop = async (req, res) => {

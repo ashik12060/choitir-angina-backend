@@ -16,6 +16,8 @@ const {
   updateProductQuantity,
   getProductsByShop,
   assignProductToShop,
+  // getProductsByBrand,
+  getProductsByTitle,
 } = require("../controllers/productController");
 
 //product routes
@@ -26,6 +28,11 @@ router.get("/products/shop/:shopId", getProductsByShop);
 
 router.get("/products/show", showProduct);
 router.get("/products/paginated", showPaginatedProducts); // <-- Pagination route
+
+router.get('/by-title/:title', getProductsByTitle);
+// Get all products by brand
+// router.get("/products/brand/:brand", getProductsByBrand);
+
 
 router.get("/product/:id", showSingleProduct);
 router.get("/category/:category", getProductsByCategory);

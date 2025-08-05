@@ -67,6 +67,29 @@ mongoose.connect(process.env.DATABASE, {
   .catch((err) => console.log(err));
 
 
+// mongoose.connect(process.env.DATABASE, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+//   connectTimeoutMS: 30000,
+//   socketTimeoutMS: 45000
+// })
+  // .then(() => {
+  //   console.log("✅ DB connected");
+    
+  //   server.listen(port, () => {
+  //     console.log(`🚀 Server running on port ${port}`);
+  //   });
+  // })
+  // .catch((err) => {
+  //   console.error("❌ MongoDB connection error:", err);
+  //   process.exit(1); // Exit the app if DB connection fails
+  // });
+
+
+
+
+
+
 //MIDDLEWARE
 app.use(timeout('10m'));
 app.use(morgan('dev'));

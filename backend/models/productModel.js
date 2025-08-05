@@ -3,18 +3,42 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 const { Schema } = mongoose;
 
+// const variantSchema = new mongoose.Schema({
+//   size: { type: String, required: true },
+//   color: { type: String, required: true },
+//   description: { type: String, required: true },
+
+//   quantity: { type: Number, default: 0 },
+//   productLength: { type: Number, required: false },
+//   subBarcode: String,
+//   subBarcodeSvg: String,
+//   imageUrl: String,
+//   imagePublicId: String,
+// });
+
+
 const variantSchema = new mongoose.Schema({
-  size: { type: String, required: true },
+  size: { type: String }, // Optional if using multipleSizes
   color: { type: String, required: true },
   description: { type: String, required: true },
+  quantity: { type: Number, default: 0 }, // Used for single size
 
-  quantity: { type: Number, default: 0 },
-  productLength: { type: Number, required: false },
+  multipleSizes: [ // Only for Stitched
+    {
+      size: { type: String },
+      quantity: { type: Number },
+    },
+  ],
+
+  productLength: { type: Number },
   subBarcode: String,
   subBarcodeSvg: String,
   imageUrl: String,
   imagePublicId: String,
 });
+
+
+
 
 const productSchema = new mongoose.Schema(
   {
