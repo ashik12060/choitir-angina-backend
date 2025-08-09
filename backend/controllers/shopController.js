@@ -25,68 +25,6 @@ exports.getShops = async (req, res) => {
 
 
 // main code
-// assign products to shops
-// exports.assignProductToShop = async (req, res) => {
-//   const { shopId } = req.params;
-//   const { productId, variantAssignments } = req.body; // variantAssignments = [{ variantId, quantity }, ...]
-
-//   try {
-//     if (!productId || !variantAssignments || !Array.isArray(variantAssignments)) {
-//       return res.status(400).json({ error: "Invalid product or variant assignments." });
-//     }
-
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//       return res.status(404).json({ error: "Product not found." });
-//     }
-
-//     const shop = await Shop.findById(shopId);
-//     if (!shop) {
-//       return res.status(404).json({ error: "Shop not found." });
-//     }
-
-//     let totalAssigned = 0;
-//     variantAssignments.forEach(({ variantId, quantity }) => {
-//       const variant = product.variants.find(v => v._id.toString() === variantId);
-//       if (!variant || quantity > variant.quantity) {
-//         throw new Error("Invalid variant or insufficient stock.");
-//       }
-//       variant.quantity -= quantity;
-//       totalAssigned += quantity;
-//     });
-
-//     await product.save();
-
-//     const existingProduct = shop.products.find(p => p.product.toString() === productId);
-
-//     if (existingProduct) {
-//       variantAssignments.forEach(({ variantId, quantity }) => {
-//         const existingVariant = existingProduct.variants.find(v => v.variant.toString() === variantId);
-//         if (existingVariant) {
-//           existingVariant.assignedQuantity += quantity;
-//         } else {
-//           existingProduct.variants.push({ variant: variantId, assignedQuantity: quantity });
-//         }
-//       });
-//     } else {
-//       shop.products.push({
-//         product: productId,
-//         variants: variantAssignments.map(({ variantId, quantity }) => ({
-//           variant: variantId,
-//           assignedQuantity: quantity
-//         }))
-//       });
-//     }
-
-//     await shop.save();
-
-//     res.status(200).json({ message: "Product assigned successfully.", shop });
-//   } catch (error) {
-//     console.error("Error assigning product:", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 
 exports.assignProductToShop = async (req, res) => {
   const { shopId } = req.params;
@@ -151,30 +89,55 @@ exports.assignProductToShop = async (req, res) => {
 };
 
 
-// get products by shop
+// get products by shop|| old one
+// exports.getShopProducts = async (req, res) => {
+//   const { shopId } = req.params;
+
+//   try {
+//     const shop = await Shop.findById(shopId)
+//   .populate({
+//     path: "products.product",
+//     model: "Product",
+//   })
+//   .populate({
+//     path: "products.variants.variant",
+//     model: "Variant", // Ensure this matches your Variant model
+//   });
+
+
+//     if (!shop) {
+//       return res.status(404).json({ error: "Shop not found" });
+//     }
+
+//     res.status(200).json(shop.products);
+//   } catch (error) {
+//     console.error("Error fetching shop products:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
+// new one
 exports.getShopProducts = async (req, res) => {
   const { shopId } = req.params;
 
   try {
-    // const shop = await Shop.findById(shopId)
-    //   .populate({
-    //     path: "products.product",
-    //     select: "title description price images",
-    //   })
-    //   .populate({
-    //     path: "products.variants.variant",
-    //     select: "size color",
-    //   });
     const shop = await Shop.findById(shopId)
-  .populate({
-    path: "products.product",
-    model: "Product",
-  })
-  .populate({
-    path: "products.variants.variant",
-    model: "Variant", // Ensure this matches your Variant model
-  });
-
+      .populate({
+        path: "products.product",
+        model: "Product",
+        select: "title price brand variants", // select only needed fields
+        populate: {
+          path: "brand",
+          model: "Brand",
+          select: "name", // adjust as per your Brand model fields
+        },
+      })
+      .populate({
+        path: "products.variants.variant",
+        model: "Variant",
+        select: "subBarcode quantity", // only needed fields from variant
+      });
 
     if (!shop) {
       return res.status(404).json({ error: "Shop not found" });

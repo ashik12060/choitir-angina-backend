@@ -11,8 +11,9 @@ exports.createPostProduct = async (req, res, next) => {
     title,
     content,
     price,
-    brandsname,
-    
+    // brandsname,
+    brand,
+    subcategory,
     supplier,
     categories,
     variants,
@@ -101,15 +102,15 @@ exports.createPostProduct = async (req, res, next) => {
     const isStitched = categories.includes("Stitched");
 
     // ✅ Validation
-    if (isStitched) {
-      if (!variant.multipleSizes || variant.multipleSizes.length === 0) {
-        throw new Error("Stitched variants must have multipleSizes");
-      }
-    } else {
-      if (!variant.size || typeof variant.quantity !== "number") {
-        throw new Error("Unstitched variants must have size and quantity");
-      }
-    }
+    // if (isStitched) {
+    //   if (!variant.multipleSizes || variant.multipleSizes.length === 0) {
+    //     throw new Error("Stitched variants must have multipleSizes");
+    //   }
+    // } else {
+    //   if (!variant.size || typeof variant.quantity !== "number") {
+    //     throw new Error("Unstitched variants must have size and quantity");
+    //   }
+    // }
 
     return {
       ...variant,
@@ -140,10 +141,10 @@ exports.createPostProduct = async (req, res, next) => {
     const product = await Product.create({
       title,
       content,
-      brandsname,
+      // brandsname,
       price,
-      // brand,
-      // subcategory,
+      brand,
+      subcategory,
       postedBy: req.user._id,
       supplier,
       categories,
@@ -426,7 +427,9 @@ exports.updateProduct = async (req, res, next) => {
       title,
       content,
       price,
-      brandsname,
+      // brandsname,
+      brand,
+      subcategory,
       supplier,
       categories,
       barcode,
@@ -449,7 +452,9 @@ exports.updateProduct = async (req, res, next) => {
     if (title) product.title = title;
     if (content) product.content = content;
     if (price) product.price = price;
-    if (brandsname) product.brandsname = brandsname;
+    // if (brandsname) product.brandsname = brandsname;
+    if (brand) product.brand = brand;
+    if (subcategory) product.subcategory = subcategory;
     if (categories) product.categories = categories;
 
     // Handle barcode
