@@ -244,17 +244,55 @@ exports.getProductsByShop = async (req, res) => {
 };
 
 // single product
+// exports.showProduct = async (req, res, next) => {
+//   try {
+//     const products = await Product.find()
+//       .sort({ createdAt: -1 })
+//       .populate("postedBy", "name");
+//     res.status(201).json({
+//       success: true,
+//       products,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 exports.showProduct = async (req, res, next) => {
   try {
+    // Pagination values
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Fetch products with pagination
     const products = await Product.find()
+      .allowDiskUse(true)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("postedBy", "name");
-    res.status(201).json({
+
+    // Count total products
+    const total = await Product.countDocuments();
+
+    res.status(200).json({
       success: true,
       products,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        total,
+      },
     });
   } catch (error) {
-    next(error);
+    console.error("Error fetching products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
   }
 };
 
