@@ -23,6 +23,11 @@ const salesSchema = new mongoose.Schema({
     name: { type: String },
     mobile: { type: String },
   },
+
+  // newly added for specif shop
+   // 🆕 Shop info so we know where the sale happened
+   shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", required: true },
+   shopName: { type: String, required: true },
   
   totalPrice: { type: Number, required: true },
   discountAmount: { type: Number, default: 0.0 },

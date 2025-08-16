@@ -135,3 +135,59 @@ exports.getShopProducts = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// exports.getShopProducts = async (req, res) => {
+//   const { shopId } = req.params;
+
+//   try {
+//     const shop = await Shop.findById(shopId)
+//       .populate({
+//         path: "products.product",
+//         model: "Product",
+//         select: "title price brand variants",
+//         populate: {
+//           path: "brand",
+//           model: "Brand",
+//           select: "name",
+//         },
+//       })
+//       .lean();
+
+//     if (!shop) {
+//       return res.status(404).json({ error: "Shop not found" });
+//     }
+
+//     const enrichedProducts = shop.products.map((shopProduct) => {
+//       const fullProduct = shopProduct.product;
+
+//       const detailedVariants = shopProduct.variants.map(({ variant, assignedQuantity }) => {
+//         const fullVariant = fullProduct.variants.find(
+//           (v) => v._id.toString() === variant.toString()
+//         );
+
+//         return {
+//           variantId: variant,
+//           assignedQuantity,
+//           size: fullVariant?.size,
+//           color: fullVariant?.color,
+//           subBarcode: fullVariant?.subBarcode,
+//           imageUrl: fullVariant?.imageUrl,
+//         };
+//       });
+
+//       return {
+//         productId: fullProduct._id,
+//         title: fullProduct.title,
+//         price: fullProduct.price,
+//         brand: fullProduct.brand?.name,
+//         variants: detailedVariants,
+//       };
+//     });
+
+//     res.status(200).json(enrichedProducts);
+//   } catch (error) {
+//     console.error("Error fetching shop products:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };

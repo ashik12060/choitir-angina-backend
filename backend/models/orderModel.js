@@ -7,6 +7,11 @@ const orderItemSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   size: { type: String, required: true },   // Ensure size is part of the schema
   color: { type: String, required: true },  // Ensure color is part of the schema
+
+    // NEW: fulfillment info
+    sourceType: { type: String, enum: ["warehouse", "shop"], required: true },
+    shopId: { type: String, default: null },
+    shopName: { type: String, default: null },
 });
 
 

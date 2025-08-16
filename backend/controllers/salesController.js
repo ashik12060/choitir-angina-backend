@@ -1,10 +1,86 @@
 const Sale = require('../models/salesModel');
 const Product = require("../models/productModel"); // Adjust path if needed
 
+// original one
+// exports.createSale = async (req, res) => {
+//   try {
+//     const {
+//       products,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       cardNumber,
+//     } = req.body;
 
+//     // Loop through each product in the sale
+//     for (const item of products) {
+//       const { productId, size, color, quantity } = item;
+
+//       const product = await Product.findById(productId);
+//       if (!product) {
+//         return res.status(404).json({ message: `Product not found: ${item.title}` });
+//       }
+
+//       // Find the matching variant (assuming you store variants like this)
+//       const variant = product.variants.find(
+//         (v) => v.size === size && v.color === color
+//       );
+
+//       if (!variant) {
+//         return res.status(404).json({
+//           message: `Variant not found for product: ${item.title} (${size}, ${color})`,
+//         });
+//       }
+
+//       // Check if there's enough quantity
+//       if (variant.quantity < quantity) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${item.title} - ${size}, ${color}`,
+//         });
+//       }
+
+//       // Decrease the quantity
+//       variant.quantity -= quantity;
+
+//       // Save the updated product
+//       await product.save();
+//     }
+
+//     // Now create the sale
+//     const saleData = {
+//       products,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//     };
+
+//     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
+//       saleData.customerInfo = customerInfo;
+//     }
+//   // 🆕 Conditionally include cardNumber if payment method is Card
+//     if (paymentMethod === "Card" && cardNumber) {
+//       saleData.cardNumber = cardNumber;
+//     }
+//     const sale = new Sale(saleData);
+//     await sale.save();
+
+//     return res.status(201).json({ message: "Sale created successfully", sale });
+//   } catch (error) {
+//     console.error("Error creating sale:", error);
+//     return res.status(500).json({ message: "Error creating sale", error });
+//   }
+// };
+
+// new one for tesing purporse
 exports.createSale = async (req, res) => {
   try {
     const {
+      shopId,
       products,
       customerInfo,
       totalPrice,
@@ -15,42 +91,48 @@ exports.createSale = async (req, res) => {
       cardNumber,
     } = req.body;
 
-    // Loop through each product in the sale
+    if (!shopId) {
+      return res.status(400).json({ message: "Shop ID is required" });
+    }
+
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    // Check and update stock in the shop
     for (const item of products) {
       const { productId, size, color, quantity } = item;
 
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: `Product not found: ${item.title}` });
-      }
-
-      // Find the matching variant (assuming you store variants like this)
-      const variant = product.variants.find(
-        (v) => v.size === size && v.color === color
+      const shopProduct = shop.products.find(
+        (p) =>
+          p.productId.toString() === productId &&
+          p.size === size &&
+          p.color === color
       );
 
-      if (!variant) {
+      if (!shopProduct) {
         return res.status(404).json({
-          message: `Variant not found for product: ${item.title} (${size}, ${color})`,
+          message: `Product not found in shop: ${item.title}`,
         });
       }
 
-      // Check if there's enough quantity
-      if (variant.quantity < quantity) {
+      if (shopProduct.quantity < quantity) {
         return res.status(400).json({
-          message: `Not enough stock for ${item.title} - ${size}, ${color}`,
+          message: `Not enough stock in ${shop.name} for ${item.title}`,
         });
       }
 
-      // Decrease the quantity
-      variant.quantity -= quantity;
-
-      // Save the updated product
-      await product.save();
+      // Deduct stock from shop
+      shopProduct.quantity -= quantity;
     }
 
-    // Now create the sale
+    await shop.save();
+
+    // Save Sale record
     const saleData = {
+      shopId,
+      shopName: shop.name,
       products,
       totalPrice,
       discountAmount,
@@ -59,13 +141,13 @@ exports.createSale = async (req, res) => {
       paymentMethod,
     };
 
-    if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
+    if (customerInfo) {
       saleData.customerInfo = customerInfo;
     }
-  // 🆕 Conditionally include cardNumber if payment method is Card
     if (paymentMethod === "Card" && cardNumber) {
       saleData.cardNumber = cardNumber;
     }
+
     const sale = new Sale(saleData);
     await sale.save();
 
@@ -75,6 +157,7 @@ exports.createSale = async (req, res) => {
     return res.status(500).json({ message: "Error creating sale", error });
   }
 };
+
 
 
 
