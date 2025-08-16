@@ -56,36 +56,26 @@ const salesWarehouseProduct = require('./routes/salesWarehouseRoute')
 
 
 //database connection
-mongoose.connect(process.env.DATABASE, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  connectTimeoutMS: 30000,  // Increase connection timeout to 30 seconds
-  socketTimeoutMS: 45000    // Increase socket timeout to 45 seconds
-  
-})
-  .then(() => console.log("DB connected"))
-  .catch((err) => console.log(err));
-
-
 // mongoose.connect(process.env.DATABASE, {
 //   useNewUrlParser: true,
 //   useUnifiedTopology: true,
-//   connectTimeoutMS: 30000,
-//   socketTimeoutMS: 45000
+//   connectTimeoutMS: 70000,  // Increase connection timeout to 30 seconds
+//   socketTimeoutMS: 45000    // Increase socket timeout to 45 seconds
+  
 // })
-  // .then(() => {
-  //   console.log("✅ DB connected");
-    
-  //   server.listen(port, () => {
-  //     console.log(`🚀 Server running on port ${port}`);
-  //   });
-  // })
-  // .catch((err) => {
-  //   console.error("❌ MongoDB connection error:", err);
-  //   process.exit(1); // Exit the app if DB connection fails
-  // });
+//   .then(() => console.log("DB connected"))
+//   .catch((err) => console.log(err));
 
 
+// new one for testing
+mongoose.connect(process.env.DATABASE, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 70000, // Time for initial connection to cluster
+  socketTimeoutMS: 45000,          // Time before a socket times out
+})
+.then(() => console.log("✅ MongoDB connected"))
+.catch(err => console.error("❌ MongoDB connection error:", err));
 
 
 

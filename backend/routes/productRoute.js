@@ -18,6 +18,9 @@ const {
   assignProductToShop,
   // getProductsByBrand,
   getProductsByTitle,
+  showAllProductsTitlePrice,
+  showPaginatedTitlePrice,
+  showAllProducts,
 } = require("../controllers/productController");
 
 //product routes
@@ -27,6 +30,7 @@ router.post("/product/assign-to-shop", assignProductToShop);
 router.get("/products/shop/:shopId", getProductsByShop);
 
 router.get("/products/show", showProduct);
+router.get("/products/all", showAllProducts);
 router.get("/products/paginated", showPaginatedProducts); // <-- Pagination route
 
 router.get('/by-title/:title', getProductsByTitle);
@@ -35,6 +39,7 @@ router.get('/by-title/:title', getProductsByTitle);
 
 
 router.get("/product/:id", showSingleProduct);
+
 router.get("/category/:category", getProductsByCategory);
 
 router.delete("/delete/product/:id", isAuthenticated, isAdmin, deleteProduct);

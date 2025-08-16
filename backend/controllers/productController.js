@@ -69,58 +69,58 @@ exports.createPostProduct = async (req, res, next) => {
     //   })
     // );
 
-
     const processedVariants = await Promise.all(
-  variants.map(async (variant) => {
-    let imageUrl = null;
-    let imagePublicId = null;
+      variants.map(async (variant) => {
+        let imageUrl = null;
+        let imagePublicId = null;
 
-    if (variant.imageUrl) {
-      const result = await cloudinary.uploader.upload(variant.imageUrl, {
-        folder: "product-variants",
-        width: 1200,
-        crop: "scale",
-      });
-      imageUrl = result.secure_url;
-      imagePublicId = result.public_id;
-    }
+        if (variant.imageUrl) {
+          const result = await cloudinary.uploader.upload(variant.imageUrl, {
+            folder: "product-variants",
+            width: 1200,
+            crop: "scale",
+          });
+          imageUrl = result.secure_url;
+          imagePublicId = result.public_id;
+        }
 
-    let subBarcodeSvg = null;
-    if (variant.subBarcode) {
-      const barcodeBuffer = await bwipjs.toBuffer({
-        bcid: "code128",
-        text: variant.subBarcode,
-        scale: 3,
-        height: 10,
-        includetext: true,
-        textxalign: "center",
-      });
-      subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
-    }
+        let subBarcodeSvg = null;
+        if (variant.subBarcode) {
+          const barcodeBuffer = await bwipjs.toBuffer({
+            bcid: "code128",
+            text: variant.subBarcode,
+            scale: 3,
+            height: 10,
+            includetext: true,
+            textxalign: "center",
+          });
+          subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString(
+            "base64"
+          )}`;
+        }
 
-    // ✅ Check if category includes "Stitched"
-    const isStitched = categories.includes("Stitched");
+        // ✅ Check if category includes "Stitched"
+        // const isStitched = categories.includes("Stitched");
 
-    // ✅ Validation
-    // if (isStitched) {
-    //   if (!variant.multipleSizes || variant.multipleSizes.length === 0) {
-    //     throw new Error("Stitched variants must have multipleSizes");
-    //   }
-    // } else {
-    //   if (!variant.size || typeof variant.quantity !== "number") {
-    //     throw new Error("Unstitched variants must have size and quantity");
-    //   }
-    // }
+        // ✅ Validation
+        // if (isStitched) {
+        //   if (!variant.multipleSizes || variant.multipleSizes.length === 0) {
+        //     throw new Error("Stitched variants must have multipleSizes");
+        //   }
+        // } else {
+        //   if (!variant.size || typeof variant.quantity !== "number") {
+        //     throw new Error("Unstitched variants must have size and quantity");
+        //   }
+        // }
 
-    return {
-      ...variant,
-      imageUrl,
-      imagePublicId,
-      subBarcodeSvg,
-    };
-  })
-);
-
+        return {
+          ...variant,
+          imageUrl,
+          imagePublicId,
+          subBarcodeSvg,
+        };
+      })
+    );
 
     // 3. Generate main product barcode
     const barcodeData = barcode || new mongoose.Types.ObjectId().toString();
@@ -194,7 +194,6 @@ exports.assignProductToShop = async (req, res) => {
 //   }
 // };
 
-
 // get products by title
 // exports.getProductsByTitle = async (req, res) => {
 //   try {
@@ -228,9 +227,6 @@ exports.getProductsByTitle = async (req, res) => {
   }
 };
 
-
-
-
 // Get products by shop
 exports.getProductsByShop = async (req, res) => {
   const { shopId } = req.params;
@@ -244,25 +240,11 @@ exports.getProductsByShop = async (req, res) => {
 };
 
 // single product
-// exports.showProduct = async (req, res, next) => {
-//   try {
-//     const products = await Product.find()
-//       .sort({ createdAt: -1 })
-//       .populate("postedBy", "name");
-//     res.status(201).json({
-//       success: true,
-//       products,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 exports.showProduct = async (req, res, next) => {
   try {
     // Pagination values
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = parseInt(req.query.limit) || 25;
     const skip = (page - 1) * limit;
 
     // Fetch products with pagination
@@ -295,6 +277,41 @@ exports.showProduct = async (req, res, next) => {
     });
   }
 };
+
+// controllers/productController.js
+exports.showAllProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to fetch products" });
+  }
+};
+
+// controllers/productController.js
+// exports.showAllProductsTitlePrice = async (req, res, next) => {
+//   try {
+//     // Fetch all products but only select title and price
+//     const products = await Product.find({}, "title price").sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch products",
+//       error: error.message,
+//     });
+//   }
+// };
+
 
 exports.showSingleProduct = async (req, res, next) => {
   try {
@@ -373,92 +390,6 @@ exports.deleteProduct = async (req, res, next) => {
 };
 
 
-// exports.updateProduct = async (req, res, next) => {
-//   try {
-//     const {
-//       title,
-//       titlebrand,
-//       content,
-//       price,
-//       sizes,
-//       quantity,
-//       brand,
-//       subcategory
-//     } = req.body;
-
-//     const currentProduct = await Product.findById(req.params.id);
-//     if (!currentProduct) {
-//       return res.status(404).json({ message: "Product not found" });
-//     }
-
-//     const updatedQuantity =
-//       quantity !== undefined ? quantity : currentProduct.quantity - 1;
-
-//     const data = {
-//       title: title || currentProduct.title,
-//       titlebrand: titlebrand || currentProduct.titlebrand,
-//       content: content || currentProduct.content,
-//       price: price || currentProduct.price,
-//       quantity: updatedQuantity,
-//       brand: brand || currentProduct.brand,
-//       sizes: sizes || currentProduct.sizes,
-//       subcategory: subcategory || currentProduct.subcategory,
-//     };
-
-//     // Handle images if new images uploaded
-//     if (req.files && req.files.length > 0) {
-//       // Optional: remove old images from Cloudinary
-//       if (currentProduct.images && currentProduct.images.length > 0) {
-//         for (let img of currentProduct.images) {
-//           if (img.public_id) {
-//             await cloudinary.uploader.destroy(img.public_id);
-//           }
-//         }
-//       }
-
-//       const uploadedImages = [];
-//       for (const file of req.files) {
-//         const uploadResult = await cloudinary.uploader.upload_stream(
-//           {
-//             folder: "products",
-//             resource_type: "image",
-//           },
-//           (error, result) => {
-//             if (error) {
-//               console.error("Cloudinary upload error:", error);
-//               throw error;
-//             }
-//             uploadedImages.push({
-//               public_id: result.public_id,
-//               url: result.secure_url,
-//             });
-//           }
-//         );
-
-//         // Stream the file buffer
-//         const stream = cloudinary.uploader.upload_stream(uploadResult);
-//         stream.end(file.buffer);
-//       }
-//       data.images = uploadedImages;
-//     }
-
-//     const productUpdate = await Product.findByIdAndUpdate(
-//       req.params.id,
-//       data,
-//       { new: true }
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       productUpdate,
-//     });
-//   } catch (error) {
-//     console.error("Update product error:", error);
-//     next(error);
-//   }
-// };
-
-
 exports.updateProduct = async (req, res, next) => {
   try {
     const {
@@ -505,14 +436,17 @@ exports.updateProduct = async (req, res, next) => {
         includetext: true,
         textxalign: "center",
       });
-      product.barcode = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+      product.barcode = `data:image/png;base64,${barcodeBuffer.toString(
+        "base64"
+      )}`;
       product.barcodeNumber = barcode;
     }
 
     // Parse variants
     let parsedVariants = [];
     if (variants) {
-      parsedVariants = typeof variants === "string" ? JSON.parse(variants) : variants;
+      parsedVariants =
+        typeof variants === "string" ? JSON.parse(variants) : variants;
       const processedVariants = await Promise.all(
         parsedVariants.map(async (variant) => {
           let imageUrl = variant.imageUrl || null;
@@ -538,7 +472,9 @@ exports.updateProduct = async (req, res, next) => {
               includetext: true,
               textxalign: "center",
             });
-            subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString("base64")}`;
+            subBarcodeSvg = `data:image/png;base64,${barcodeBuffer.toString(
+              "base64"
+            )}`;
           }
 
           return {
@@ -586,7 +522,6 @@ exports.updateProduct = async (req, res, next) => {
     next(error);
   }
 };
-
 
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
@@ -663,30 +598,107 @@ exports.removeLike = async (req, res, next) => {
 
 //pagination
 // Pagination for products
-exports.showPaginatedProducts = async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1; // Current page number
-  const limit = parseInt(req.query.limit) || 12; // Number of products per page
+// exports.showPaginatedProducts = async (req, res, next) => {
+//   const page = parseInt(req.query.page) || 1; // Current page number
+//   const limit = parseInt(req.query.limit) || 25; // Number of products per page
 
+//   try {
+//     const totalProducts = await Product.countDocuments();
+//     const products = await Product.find()
+//       .sort({ createdAt: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(limit)
+//       .populate("postedBy", "name");
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//       totalPages: Math.ceil(totalProducts / limit),
+//       currentPage: page,
+//       totalProducts,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     next(new ErrorResponse("Failed to load products", 500));
+//   }
+// };
+exports.showPaginatedProducts = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 16;
+    const skip = (page - 1) * limit;
+
     const totalProducts = await Product.countDocuments();
+
     const products = await Product.find()
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .sort({ createdAt: -1, _id: -1 }) // tie-breaker added
+      .skip(skip)
       .limit(limit)
       .populate("postedBy", "name");
 
     res.status(200).json({
       success: true,
       products,
-      totalPages: Math.ceil(totalProducts / limit),
       currentPage: page,
+      totalPages: Math.ceil(totalProducts / limit),
       totalProducts,
     });
   } catch (error) {
     console.error(error);
-    next(new ErrorResponse("Failed to load products", 500));
+    res.status(500).json({
+      success: false,
+      message: "Failed to load products",
+      error: error.message,
+    });
   }
 };
+// Controller
+// exports.showPaginatedProducts = async (req, res, next) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 25;
+//     const skip = (page - 1) * limit;
+
+//     const totalProducts = await Product.countDocuments();
+
+//     const products = await Product.find(
+//       {},
+//       {
+//         title: 1,
+//         price: 1,
+//         categories: 1,
+//         brand: 1,
+//         postedBy: 1,
+//         createdAt: 1,
+//         // Keep only lightweight fields, exclude large images from variants
+//         "variants.size": 1,
+//         "variants.color": 1,
+//         "variants.description": 1,
+//       }
+//     )
+//       .sort({ createdAt: -1, _id: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .allowDiskUse(true) // <-- Fix for 32MB sort limit
+//       .populate("postedBy", "name");
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//       currentPage: page,
+//       totalPages: Math.ceil(totalProducts / limit),
+//       totalProducts,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to load products",
+//       error: error.message,
+//     });
+//   }
+// };
+
 
 // Filter products by category
 exports.getProductsByCategory = async (req, res, next) => {

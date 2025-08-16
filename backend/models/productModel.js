@@ -3,42 +3,18 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 const { Schema } = mongoose;
 
-// const variantSchema = new mongoose.Schema({
-//   size: { type: String, required: true },
-//   color: { type: String, required: true },
-//   description: { type: String, required: true },
-
-//   quantity: { type: Number, default: 0 },
-//   productLength: { type: Number, required: false },
-//   subBarcode: String,
-//   subBarcodeSvg: String,
-//   imageUrl: String,
-//   imagePublicId: String,
-// });
-
-
 const variantSchema = new mongoose.Schema({
-  size: { type: String }, // Optional if using multipleSizes
+  size: { type: String, required: true },
   color: { type: String, required: true },
   description: { type: String, required: true },
-  quantity: { type: Number, default: 0 }, // Used for single size
 
-  multipleSizes: [ // Only for Stitched
-    {
-      size: { type: String },
-      quantity: { type: Number },
-    },
-  ],
-
-  productLength: { type: Number },
+  quantity: { type: Number, default: 0 },
+  productLength: { type: Number, required: false },
   subBarcode: String,
   subBarcodeSvg: String,
   imageUrl: String,
   imagePublicId: String,
 });
-
-
-
 
 const productSchema = new mongoose.Schema(
   {
@@ -100,5 +76,9 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ✅ Add index here
+productSchema.index({ createdAt: -1, _id: -1 });
+
 
 module.exports = mongoose.model("Product", productSchema);
