@@ -137,6 +137,28 @@ exports.getShopProducts = async (req, res) => {
 };
 
 
+exports.getShopById = async (req, res) => {
+  try {
+    const shop = await Shop.findById(req.params.id)
+      .populate({
+        path: "products.product",
+        select: "title price variants",
+      })
+      .populate({
+        path: "products.variants.variant",
+        select: "size color quantity",
+      });
+
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+    res.json(shop);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
 // exports.getShopProducts = async (req, res) => {
 //   const { shopId } = req.params;
 

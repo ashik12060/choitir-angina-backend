@@ -30,7 +30,6 @@ router.post("/product/assign-to-shop", assignProductToShop);
 router.get("/products/shop/:shopId", getProductsByShop);
 
 router.get("/products/show", showProduct);
-router.get("/products/all", showAllProducts);
 router.get("/products/paginated", showPaginatedProducts); // <-- Pagination route
 
 router.get('/by-title/:title', getProductsByTitle);

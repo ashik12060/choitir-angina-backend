@@ -279,39 +279,6 @@ exports.showProduct = async (req, res, next) => {
 };
 
 // controllers/productController.js
-exports.showAllProducts = async (req, res, next) => {
-  try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    res.status(200).json({
-      success: true,
-      products,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Failed to fetch products" });
-  }
-};
-
-// controllers/productController.js
-// exports.showAllProductsTitlePrice = async (req, res, next) => {
-//   try {
-//     // Fetch all products but only select title and price
-//     const products = await Product.find({}, "title price").sort({ createdAt: -1 });
-
-//     res.status(200).json({
-//       success: true,
-//       products,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch products",
-//       error: error.message,
-//     });
-//   }
-// };
-
 
 exports.showSingleProduct = async (req, res, next) => {
   try {
@@ -597,44 +564,31 @@ exports.removeLike = async (req, res, next) => {
 };
 
 //pagination
-// Pagination for products
-// exports.showPaginatedProducts = async (req, res, next) => {
-//   const page = parseInt(req.query.page) || 1; // Current page number
-//   const limit = parseInt(req.query.limit) || 25; // Number of products per page
-
-//   try {
-//     const totalProducts = await Product.countDocuments();
-//     const products = await Product.find()
-//       .sort({ createdAt: -1 })
-//       .skip((page - 1) * limit)
-//       .limit(limit)
-//       .populate("postedBy", "name");
-
-//     res.status(200).json({
-//       success: true,
-//       products,
-//       totalPages: Math.ceil(totalProducts / limit),
-//       currentPage: page,
-//       totalProducts,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     next(new ErrorResponse("Failed to load products", 500));
-//   }
-// };
-exports.showPaginatedProducts = async (req, res, next) => {
+exports.showPaginatedProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 16;
     const skip = (page - 1) * limit;
 
-    const totalProducts = await Product.countDocuments();
-
-    const products = await Product.find()
-      .sort({ createdAt: -1, _id: -1 }) // tie-breaker added
-      .skip(skip)
-      .limit(limit)
-      .populate("postedBy", "name");
+    // Fetch products
+    const [products, totalProducts] = await Promise.all([
+      // Product.find({}, "title price categories barcode variants createdAt")
+      Product.find({}, "title price variants ")
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .then(products =>
+          products.map(p => ({
+            ...p,
+            // Keep only the first variant's image for frontend
+            variants: p.variants.length
+              ? [{ imageUrl: p.variants[0].imageUrl }]
+              : [],
+          }))
+        ),
+      Product.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
@@ -652,52 +606,7 @@ exports.showPaginatedProducts = async (req, res, next) => {
     });
   }
 };
-// Controller
-// exports.showPaginatedProducts = async (req, res, next) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 25;
-//     const skip = (page - 1) * limit;
 
-//     const totalProducts = await Product.countDocuments();
-
-//     const products = await Product.find(
-//       {},
-//       {
-//         title: 1,
-//         price: 1,
-//         categories: 1,
-//         brand: 1,
-//         postedBy: 1,
-//         createdAt: 1,
-//         // Keep only lightweight fields, exclude large images from variants
-//         "variants.size": 1,
-//         "variants.color": 1,
-//         "variants.description": 1,
-//       }
-//     )
-//       .sort({ createdAt: -1, _id: -1 })
-//       .skip(skip)
-//       .limit(limit)
-//       .allowDiskUse(true) // <-- Fix for 32MB sort limit
-//       .populate("postedBy", "name");
-
-//     res.status(200).json({
-//       success: true,
-//       products,
-//       currentPage: page,
-//       totalPages: Math.ceil(totalProducts / limit),
-//       totalProducts,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to load products",
-//       error: error.message,
-//     });
-//   }
-// };
 
 
 // Filter products by category

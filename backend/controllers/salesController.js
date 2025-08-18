@@ -1,86 +1,12 @@
 const Sale = require('../models/salesModel');
 const Product = require("../models/productModel"); // Adjust path if needed
 
+const Shop = require("../models/shopModel");
+
 // original one
-// exports.createSale = async (req, res) => {
-//   try {
-//     const {
-//       products,
-//       customerInfo,
-//       totalPrice,
-//       discountAmount,
-//       vatAmount,
-//       netPayable,
-//       paymentMethod,
-//       cardNumber,
-//     } = req.body;
-
-//     // Loop through each product in the sale
-//     for (const item of products) {
-//       const { productId, size, color, quantity } = item;
-
-//       const product = await Product.findById(productId);
-//       if (!product) {
-//         return res.status(404).json({ message: `Product not found: ${item.title}` });
-//       }
-
-//       // Find the matching variant (assuming you store variants like this)
-//       const variant = product.variants.find(
-//         (v) => v.size === size && v.color === color
-//       );
-
-//       if (!variant) {
-//         return res.status(404).json({
-//           message: `Variant not found for product: ${item.title} (${size}, ${color})`,
-//         });
-//       }
-
-//       // Check if there's enough quantity
-//       if (variant.quantity < quantity) {
-//         return res.status(400).json({
-//           message: `Not enough stock for ${item.title} - ${size}, ${color}`,
-//         });
-//       }
-
-//       // Decrease the quantity
-//       variant.quantity -= quantity;
-
-//       // Save the updated product
-//       await product.save();
-//     }
-
-//     // Now create the sale
-//     const saleData = {
-//       products,
-//       totalPrice,
-//       discountAmount,
-//       vatAmount,
-//       netPayable,
-//       paymentMethod,
-//     };
-
-//     if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
-//       saleData.customerInfo = customerInfo;
-//     }
-//   // 🆕 Conditionally include cardNumber if payment method is Card
-//     if (paymentMethod === "Card" && cardNumber) {
-//       saleData.cardNumber = cardNumber;
-//     }
-//     const sale = new Sale(saleData);
-//     await sale.save();
-
-//     return res.status(201).json({ message: "Sale created successfully", sale });
-//   } catch (error) {
-//     console.error("Error creating sale:", error);
-//     return res.status(500).json({ message: "Error creating sale", error });
-//   }
-// };
-
-// new one for tesing purporse
 exports.createSale = async (req, res) => {
   try {
     const {
-      shopId,
       products,
       customerInfo,
       totalPrice,
@@ -91,48 +17,42 @@ exports.createSale = async (req, res) => {
       cardNumber,
     } = req.body;
 
-    if (!shopId) {
-      return res.status(400).json({ message: "Shop ID is required" });
-    }
-
-    const shop = await Shop.findById(shopId);
-    if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
-    }
-
-    // Check and update stock in the shop
+    // Loop through each product in the sale
     for (const item of products) {
       const { productId, size, color, quantity } = item;
 
-      const shopProduct = shop.products.find(
-        (p) =>
-          p.productId.toString() === productId &&
-          p.size === size &&
-          p.color === color
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: `Product not found: ${item.title}` });
+      }
+
+      // Find the matching variant (assuming you store variants like this)
+      const variant = product.variants.find(
+        (v) => v.size === size && v.color === color
       );
 
-      if (!shopProduct) {
+      if (!variant) {
         return res.status(404).json({
-          message: `Product not found in shop: ${item.title}`,
+          message: `Variant not found for product: ${item.title} (${size}, ${color})`,
         });
       }
 
-      if (shopProduct.quantity < quantity) {
+      // Check if there's enough quantity
+      if (variant.quantity < quantity) {
         return res.status(400).json({
-          message: `Not enough stock in ${shop.name} for ${item.title}`,
+          message: `Not enough stock for ${item.title} - ${size}, ${color}`,
         });
       }
 
-      // Deduct stock from shop
-      shopProduct.quantity -= quantity;
+      // Decrease the quantity
+      variant.quantity -= quantity;
+
+      // Save the updated product
+      await product.save();
     }
 
-    await shop.save();
-
-    // Save Sale record
+    // Now create the sale
     const saleData = {
-      shopId,
-      shopName: shop.name,
       products,
       totalPrice,
       discountAmount,
@@ -141,13 +61,13 @@ exports.createSale = async (req, res) => {
       paymentMethod,
     };
 
-    if (customerInfo) {
+    if (customerInfo && (customerInfo.id || customerInfo.name || customerInfo.mobile)) {
       saleData.customerInfo = customerInfo;
     }
+  // 🆕 Conditionally include cardNumber if payment method is Card
     if (paymentMethod === "Card" && cardNumber) {
       saleData.cardNumber = cardNumber;
     }
-
     const sale = new Sale(saleData);
     await sale.save();
 
@@ -158,18 +78,102 @@ exports.createSale = async (req, res) => {
   }
 };
 
+// new one for tesing purporse
 
 
 
-
-// exports.getAllSales = async (req, res) => {
+// exports.createSale = async (req, res) => {
 //   try {
-//     const sales = await Sale.find();
-//     return res.status(200).json(sales);
+//     const {
+//       shopId,
+//       products,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       cardNumber,
+//     } = req.body;
+
+//     // Fetch shop with populated products & variants
+//     const shop = await Shop.findById(shopId)
+//       .populate({
+//         path: "products.product",
+//         select: "title price variants",
+//       })
+//       .populate({
+//         path: "products.variants.variant",
+//         select: "size color quantity",
+//       });
+
+//     if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+//     // Loop through products to validate availability in shop
+//     for (const item of products) {
+//       const shopProduct = shop.products.find(
+//         (p) => p.product._id.toString() === item.productId
+//       );
+//       if (!shopProduct) {
+//         return res.status(404).json({ message: `Product not in this shop: ${item.title}` });
+//       }
+
+//       const shopVariant = shopProduct.variants.find(
+//         (v) => v.variant._id.toString() === item.variantId
+//       );
+
+//       if (!shopVariant) {
+//         return res.status(404).json({
+//           message: `Variant not found in this shop: ${item.title}`,
+//         });
+//       }
+
+//       if (shopVariant.assignedQuantity < item.quantity) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${item.title} - ${shopVariant.variant.size}, ${shopVariant.variant.color}`,
+//         });
+//       }
+
+//       // Deduct assignedQuantity from shop
+//       shopVariant.assignedQuantity -= item.quantity;
+//     }
+
+//     // Save updated shop quantities
+//     await shop.save();
+
+//     // Create sale
+//     const sale = new Sale({
+//       shopId,
+//       products,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       ...(paymentMethod === "Card" && { cardNumber }),
+//     });
+
+//     await sale.save();
+//     return res.status(201).json({ message: "Sale created successfully", sale });
 //   } catch (error) {
-//     return res.status(500).json({ message: 'Error retrieving sales', error });
+//     console.error("Error creating sale:", error);
+//     return res.status(500).json({ message: "Error creating sale", error });
 //   }
 // };
+
+
+
+
+
+exports.getAllSales = async (req, res) => {
+  try {
+    const sales = await Sale.find();
+    return res.status(200).json(sales);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error retrieving sales', error });
+  }
+};
 exports.getAllSales = async (req, res) => {
   try {
     const { from, to } = req.query;
