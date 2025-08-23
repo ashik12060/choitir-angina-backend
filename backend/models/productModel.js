@@ -36,6 +36,16 @@ const productSchema = new mongoose.Schema(
       required: [true, "price is required"],
     },
 
+
+       // 👉 New field to store old prices
+    priceHistory: [
+      {
+        oldPrice: { type: Number },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+
+    
     variants: [variantSchema],
 
     postedBy: {

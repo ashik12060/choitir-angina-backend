@@ -356,7 +356,6 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
-
 exports.updateProduct = async (req, res, next) => {
   try {
     const {
@@ -387,7 +386,21 @@ exports.updateProduct = async (req, res, next) => {
 
     if (title) product.title = title;
     if (content) product.content = content;
-    if (price) product.price = price;
+    // if (price) product.price = price;
+      // ✅ Handle price update with history
+    if (price && price !== product.price) {
+      if (!product.priceHistory) product.priceHistory = [];
+
+      product.priceHistory.push({
+        oldPrice: product.price,
+        updatedAt: new Date(),
+      });
+
+      product.price = price;
+    }
+
+
+
     // if (brandsname) product.brandsname = brandsname;
     if (brand) product.brand = brand;
     if (subcategory) product.subcategory = subcategory;
@@ -570,18 +583,16 @@ exports.showPaginatedProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 16;
     const skip = (page - 1) * limit;
 
-    // Fetch products
     const [products, totalProducts] = await Promise.all([
-      // Product.find({}, "title price categories barcode variants createdAt")
       Product.find({}, "title price variants ")
         .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
-        .then(products =>
-          products.map(p => ({
+        .then((products) =>
+          products.map((p) => ({
             ...p,
-            // Keep only the first variant's image for frontend
+
             variants: p.variants.length
               ? [{ imageUrl: p.variants[0].imageUrl }]
               : [],
@@ -606,8 +617,6 @@ exports.showPaginatedProducts = async (req, res) => {
     });
   }
 };
-
-
 
 // Filter products by category
 exports.getProductsByCategory = async (req, res, next) => {
