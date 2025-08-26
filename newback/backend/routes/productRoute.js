@@ -21,14 +21,8 @@ const {
   getProductsByTitle,
   showAllProductsTitlePrice,
   showPaginatedTitlePrice,
-
-  updateProduct,
-  getProductBySubBarcode,
-  showSubbarcodeProducts,
   showAllProducts,
-  showProductsForPOS,
-  showPaginatedPOSProducts,
-  showPaginatedProductsFullVariants,
+  updateProduct,
  
 } = require("../controllers/productController");
 
@@ -53,10 +47,6 @@ router.get('/by-title/:title', getProductsByTitle);
 // Get all products by brand
 // router.get("/products/brand/:brand", getProductsByBrand);
 
-router.get("/products/by-subbarcode", showSubbarcodeProducts);
-router.get("/products/showall", showAllProducts);
-
-router.get("/products/pos", showPaginatedProductsFullVariants);
 
 router.get("/product/:id", showSingleProduct);
 

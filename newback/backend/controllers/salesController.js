@@ -78,6 +78,91 @@ exports.createSale = async (req, res) => {
   }
 };
 
+// new one for tesing purporse
+
+
+
+// exports.createSale = async (req, res) => {
+//   try {
+//     const {
+//       shopId,
+//       products,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       cardNumber,
+//     } = req.body;
+
+//     // Fetch shop with populated products & variants
+//     const shop = await Shop.findById(shopId)
+//       .populate({
+//         path: "products.product",
+//         select: "title price variants",
+//       })
+//       .populate({
+//         path: "products.variants.variant",
+//         select: "size color quantity",
+//       });
+
+//     if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+//     // Loop through products to validate availability in shop
+//     for (const item of products) {
+//       const shopProduct = shop.products.find(
+//         (p) => p.product._id.toString() === item.productId
+//       );
+//       if (!shopProduct) {
+//         return res.status(404).json({ message: `Product not in this shop: ${item.title}` });
+//       }
+
+//       const shopVariant = shopProduct.variants.find(
+//         (v) => v.variant._id.toString() === item.variantId
+//       );
+
+//       if (!shopVariant) {
+//         return res.status(404).json({
+//           message: `Variant not found in this shop: ${item.title}`,
+//         });
+//       }
+
+//       if (shopVariant.assignedQuantity < item.quantity) {
+//         return res.status(400).json({
+//           message: `Not enough stock for ${item.title} - ${shopVariant.variant.size}, ${shopVariant.variant.color}`,
+//         });
+//       }
+
+//       // Deduct assignedQuantity from shop
+//       shopVariant.assignedQuantity -= item.quantity;
+//     }
+
+//     // Save updated shop quantities
+//     await shop.save();
+
+//     // Create sale
+//     const sale = new Sale({
+//       shopId,
+//       products,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       ...(paymentMethod === "Card" && { cardNumber }),
+//     });
+
+//     await sale.save();
+//     return res.status(201).json({ message: "Sale created successfully", sale });
+//   } catch (error) {
+//     console.error("Error creating sale:", error);
+//     return res.status(500).json({ message: "Error creating sale", error });
+//   }
+// };
+
+
 
 
 

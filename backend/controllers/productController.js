@@ -176,38 +176,6 @@ exports.assignProductToShop = async (req, res) => {
   }
 };
 
-// Get all products by brand name
-// exports.getProductsByBrand = async (req, res, next) => {
-//   try {
-//     const brandId = req.params.brand;
-//     const products = await Product.find({ brand: brandId })
-//       .populate("brand", "name")
-//       .populate("supplier", "name")
-//       .populate("shop", "name");
-
-//     res.status(200).json({
-//       success: true,
-//       products,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// get products by title
-// exports.getProductsByTitle = async (req, res) => {
-//   try {
-//     const title = req.params.title;
-
-//     // Find all products with the given title
-//     const products = await Product.find({ title }).sort({ createdAt: -1 });
-
-//     res.status(200).json({ products });
-//   } catch (error) {
-//     console.error("Error fetching products by title:", error);
-//     res.status(500).json({ message: "Server error", error });
-//   }
-// };
 
 exports.getProductsByTitle = async (req, res) => {
   try {
@@ -240,6 +208,43 @@ exports.getProductsByShop = async (req, res) => {
 };
 
 // single product
+// exports.showProduct = async (req, res, next) => {
+//   try {
+//     // Pagination values
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 25;
+//     const skip = (page - 1) * limit;
+
+//     // Fetch products with pagination
+//     const products = await Product.find()
+//       .allowDiskUse(true)
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .populate("postedBy", "name");
+
+//     // Count total products
+//     const total = await Product.countDocuments();
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//       pagination: {
+//         page,
+//         limit,
+//         totalPages: Math.ceil(total / limit),
+//         total,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching products:", error.message);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch products",
+//       error: error.message,
+//     });
+//   }
+// };
 exports.showProduct = async (req, res, next) => {
   try {
     // Pagination values
@@ -277,6 +282,77 @@ exports.showProduct = async (req, res, next) => {
     });
   }
 };
+
+// controllers/productController.js
+exports.showAllProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to fetch products" });
+  }
+};
+
+exports.showSubbarcodeProducts = async (req, res) => {
+  try {
+    const products = await Product.find()
+      .sort({ createdAt: -1 })
+      .populate("postedBy", "name");
+
+    res.status(200).json({
+      success: true,
+      products,
+      total: products.length,
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
+  }
+};
+
+
+
+// GET /api/products/stock
+// exports.getStockReport = async (req, res) => {
+//   try {
+//     // Fetch products with title and variants only
+//     const products = await Product.find()
+//       .select("title variants")
+//       .lean();
+
+//     // Map products to total quantities
+//     const stockItems = products.map((product) => {
+//       const totalQuantity = product.variants?.reduce(
+//         (sum, v) => sum + (v.quantity || 0),
+//         0
+//       ) || 0;
+
+//       return {
+//         productName: product.title,
+//         totalQuantity,
+//       };
+//     });
+
+//     res.json({ success: true, products: stockItems });
+//   } catch (error) {
+//     console.error("Error fetching stock report:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch stock report",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 
 // controllers/productController.js
 
@@ -618,21 +694,142 @@ exports.showPaginatedProducts = async (req, res) => {
   }
 };
 
-// Filter products by category
-exports.getProductsByCategory = async (req, res, next) => {
-  const category = req.params.category; // Get category from URL
 
+// show products for pos
+// controllers/productController.js
+// exports.showPaginatedProductsFullVariants = async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 21;
+//     const skip = (page - 1) * limit;
+
+//     const [products, totalProducts] = await Promise.all([
+//       Product.find({}, "title price variants") // include title, price, variants
+//         .sort({ createdAt: -1, _id: -1 })
+//         .skip(skip)
+//         .limit(limit)
+//         .lean()
+//         .then((products) =>
+//           products.map((p) => ({
+//             ...p,
+//             // Return all variants fully
+//             variants: p.variants || [],
+//           }))
+//         ),
+//       Product.countDocuments(),
+//     ]);
+
+//     res.status(200).json({
+//       success: true,
+//       products,
+//       currentPage: page,
+//       totalPages: Math.ceil(totalProducts / limit),
+//       totalProducts,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to load products",
+//       error: error.message,
+//     });
+//   }
+// };
+
+exports.showPaginatedProductsFullVariants = async (req, res) => {
   try {
-    const products = await Product.find({ categories: category })
-      .populate("postedBy", "name")
-      .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 19;
+    const skip = (page - 1) * limit;
+
+    const [products, totalProducts] = await Promise.all([
+      Product.find({}, "title price variants")
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .then((products) =>
+          products.map((p) => ({
+            ...p,
+            variants: p.variants.map((v) => ({
+              size: v.size,
+              color: v.color,
+              description: v.description,
+              productLength: v.productLength,
+              quantity: v.quantity,
+              subBarcode: v.subBarcode,
+            })),
+          }))
+        ),
+      Product.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       products,
+      currentPage: page,
+      totalPages: Math.ceil(totalProducts / limit),
+      totalProducts,
     });
   } catch (error) {
-    next(error);
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load products",
+      error: error.message,
+    });
+  }
+};
+
+
+let cache = {};
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const category = req.params.category.trim(); // category from URL
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const key = `${category}-${page}`;
+
+    // Return cached response if available
+    if (cache[key]) {
+      return res.json({ success: true, ...cache[key], cached: true });
+    }
+
+    // Query products safely
+    const [products, total] = await Promise.all([
+      Product.find({ categories: { $in: [category] } }) // match exact category
+        .select("title variants categories postedBy")
+        .populate({ path: "postedBy", select: "name", strictPopulate: false })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments({ categories: { $in: [category] } }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    const data = {
+      currentPage: page,
+      totalPages,
+      totalProducts: total,
+      products,
+    };
+
+    // Cache for future requests
+    cache[key] = data;
+
+    return res.json({ success: true, ...data });
+
+  } catch (error) {
+    console.error("Error in getProductsByCategory:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
   }
 };
 
@@ -670,3 +867,72 @@ exports.updateProductQuantity = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+// Get product by subBarcode
+// exports.getProductBySubBarcode = async (req, res) => {
+//   try {
+//     const { subBarcode } = req.params;
+
+//     // Find product that contains this subBarcode inside its variants
+//     const product = await Product.findOne(
+//       { "variants.subBarcode": subBarcode }, // look inside variants array
+//       { title: 1, price: 1, variants: 1 }   // only select needed fields
+//     ).populate("postedBy", "name");
+
+//     if (!product) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Product not found with this SubBarcode",
+//       });
+//     }
+
+//     // extract only the matching variant
+//     const variant = product.variants.find(v => v.subBarcode === subBarcode);
+
+//     res.status(200).json({
+//       success: true,
+//       product: {
+//         _id: product._id,
+//         title: product.title,
+//         price: product.price,
+//         variant,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching product by subBarcode:", error.message);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch product",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
+
+exports.getProductBySubBarcode = async (req, res, next) => {
+  try {
+    // Fetch all products without pagination
+    const products = await Product.find()
+      .allowDiskUse(true)
+      .sort({ createdAt: -1 })
+      .populate("postedBy", "name");
+
+    res.status(200).json({
+      success: true,
+      products,
+      total: products.length,
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
+  }
+};
+
+
