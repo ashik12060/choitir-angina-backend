@@ -30,6 +30,7 @@ const {
   showPaginatedPOSProducts,
   showPaginatedProductsFullVariants,
   getAllProductsFullVariants,
+  getStockReport,
  
 } = require("../controllers/productController");
 
@@ -59,6 +60,9 @@ router.get("/products/showall", showAllProducts);
 
 // router.get("/products/pos", showPaginatedProductsFullVariants);
 router.get("/products/pos", getAllProductsFullVariants);
+
+router.get("/products/stock", getStockReport);
+
 
 router.get("/product/:id", showSingleProduct);
 

@@ -817,6 +817,42 @@ exports.getAllProductsFullVariants = async (req, res) => {
 };
 
 
+
+exports.getStockReport = async (req, res) => {
+  try {
+    const products = await Product.find({}, "title price variants").lean();
+
+    const stockReport = products.map((p) => {
+      const totalQty = p.variants.reduce(
+        (sum, v) => sum + (v.quantity || 0),
+        0
+      );
+      return {
+        title: p.title,
+        price: p.price,
+        totalQuantity: totalQty,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      stockReport,
+      totalProducts: stockReport.length,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate stock report",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+
 let cache = {};
 
 exports.getProductsByCategory = async (req, res) => {
