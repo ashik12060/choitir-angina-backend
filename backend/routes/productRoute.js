@@ -29,6 +29,7 @@ const {
   showProductsForPOS,
   showPaginatedPOSProducts,
   showPaginatedProductsFullVariants,
+  getAllProductsFullVariants,
  
 } = require("../controllers/productController");
 
@@ -56,7 +57,8 @@ router.get('/by-title/:title', getProductsByTitle);
 router.get("/products/by-subbarcode", showSubbarcodeProducts);
 router.get("/products/showall", showAllProducts);
 
-router.get("/products/pos", showPaginatedProductsFullVariants);
+// router.get("/products/pos", showPaginatedProductsFullVariants);
+router.get("/products/pos", getAllProductsFullVariants);
 
 router.get("/product/:id", showSingleProduct);
 

@@ -781,6 +781,41 @@ exports.showPaginatedProductsFullVariants = async (req, res) => {
   }
 };
 
+// new for all the product request
+exports.getAllProductsFullVariants = async (req, res) => {
+  try {
+    const products = await Product.find({}, "title price variants")
+      .sort({ createdAt: -1, _id: -1 })
+      .lean()
+      .then((products) =>
+        products.map((p) => ({
+          ...p,
+          variants: p.variants.map((v) => ({
+            size: v.size,
+            color: v.color,
+            description: v.description,
+            productLength: v.productLength,
+            quantity: v.quantity,
+            subBarcode: v.subBarcode,
+          })),
+        }))
+      );
+
+    res.status(200).json({
+      success: true,
+      products,
+      totalProducts: products.length,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load products",
+      error: error.message,
+    });
+  }
+};
+
 
 let cache = {};
 
