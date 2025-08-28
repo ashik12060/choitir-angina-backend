@@ -849,7 +849,40 @@ exports.getStockReport = async (req, res) => {
   }
 };
 
+// get all subbarcode
+exports.getAllSubBarcodesWithProducts = async (req, res) => {
+  try {
+    const products = await Product.find({}, "title price variants")
+      .sort({ createdAt: -1, _id: -1 })
+      .lean();
 
+    const subBarcodes = products.flatMap((product) =>
+      (product.variants || [])
+        .filter((v) => v.subBarcode) // only keep valid subBarcodes
+        .map((v) => ({
+          subBarcode: v.subBarcode,
+          subBarcodeSvg: v.subBarcodeSvg || null,
+          color: v.color || null,
+          size: v.size || null,
+          productTitle: product.title,
+          productPrice: product.price,
+        }))
+    );
+
+    res.status(200).json({
+      success: true,
+      totalSubBarcodes: subBarcodes.length,
+      subBarcodes,
+    });
+  } catch (error) {
+    console.error("Error fetching subBarcodes with products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load subBarcodes",
+      error: error.message,
+    });
+  }
+};
 
 
 

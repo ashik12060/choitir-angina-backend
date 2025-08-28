@@ -31,6 +31,8 @@ const {
   showPaginatedProductsFullVariants,
   getAllProductsFullVariants,
   getStockReport,
+  getAllSubBarcodes,
+  getAllSubBarcodesWithProducts,
  
 } = require("../controllers/productController");
 
@@ -62,6 +64,8 @@ router.get("/products/showall", showAllProducts);
 router.get("/products/pos", getAllProductsFullVariants);
 
 router.get("/products/stock", getStockReport);
+
+router.get("/products/subbarcodes/full", getAllSubBarcodesWithProducts);
 
 
 router.get("/product/:id", showSingleProduct);
