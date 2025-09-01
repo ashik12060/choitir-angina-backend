@@ -52,6 +52,7 @@ const subCategoryRoute = require('./routes/subCategoryRoute')
 const shopRoutes = require('./routes/shopRoutes')
 const warehouseProduct = require('./routes/warehouseCleanRoutes')
 const salesWarehouseProduct = require('./routes/salesWarehouseRoute')
+const bashundharaSalesPosRoutes = require('./routes/bashundharaSalesPosRoutes')
 
 
 
@@ -142,6 +143,7 @@ app.use('/api', subCategoryRoute);
 app.use('/api', shopRoutes);
 app.use('/api', warehouseProduct);
 app.use('/api', salesWarehouseProduct);
+app.use('/api', bashundharaSalesPosRoutes);
 
 
 

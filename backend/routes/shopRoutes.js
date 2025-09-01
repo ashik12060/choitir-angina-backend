@@ -8,5 +8,4 @@ router.get('/shops/show', getShops);
 router.post("/shops/:shopId/assign-product", assignProductToShop);
 router.get("/shops/:shopId/products", getShopProducts); 
 router.get("/shops/:id", getShopById);
-
 module.exports = router;

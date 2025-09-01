@@ -176,7 +176,6 @@ exports.assignProductToShop = async (req, res) => {
   }
 };
 
-
 exports.getProductsByTitle = async (req, res) => {
   try {
     // Convert "emaan-adeel" → "emaan adeel"
@@ -258,6 +257,7 @@ exports.showProduct = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
+      .lean()
       .populate("postedBy", "name");
 
     // Count total products
@@ -283,6 +283,45 @@ exports.showProduct = async (req, res, next) => {
   }
 };
 
+exports.showAdminProduct = async (req, res, next) => {
+  try {
+    // Pagination values
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 25;
+    const skip = (page - 1) * limit;
+
+    // Fetch only the required fields
+    const products = await Product.find({}, "_id title postedBy createdAt")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("postedBy", "name") // only get postedBy name
+      .lean(); // return plain JS objects, much faster
+
+    // Count total products
+    const total = await Product.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        total,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message,
+    });
+  }
+};
+
+
 // controllers/productController.js
 exports.showAllProducts = async (req, res, next) => {
   try {
@@ -293,7 +332,9 @@ exports.showAllProducts = async (req, res, next) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to fetch products" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch products" });
   }
 };
 
@@ -317,8 +358,6 @@ exports.showSubbarcodeProducts = async (req, res) => {
     });
   }
 };
-
-
 
 // GET /api/products/stock
 // exports.getStockReport = async (req, res) => {
@@ -351,8 +390,6 @@ exports.showSubbarcodeProducts = async (req, res) => {
 //     });
 //   }
 // };
-
-
 
 // controllers/productController.js
 
@@ -463,7 +500,7 @@ exports.updateProduct = async (req, res, next) => {
     if (title) product.title = title;
     if (content) product.content = content;
     // if (price) product.price = price;
-      // ✅ Handle price update with history
+    // ✅ Handle price update with history
     if (price && price !== product.price) {
       if (!product.priceHistory) product.priceHistory = [];
 
@@ -474,8 +511,6 @@ exports.updateProduct = async (req, res, next) => {
 
       product.price = price;
     }
-
-
 
     // if (brandsname) product.brandsname = brandsname;
     if (brand) product.brand = brand;
@@ -694,7 +729,6 @@ exports.showPaginatedProducts = async (req, res) => {
   }
 };
 
-
 // show products for pos
 // controllers/productController.js
 // exports.showPaginatedProductsFullVariants = async (req, res) => {
@@ -816,8 +850,6 @@ exports.getAllProductsFullVariants = async (req, res) => {
   }
 };
 
-
-
 exports.getStockReport = async (req, res) => {
   try {
     const products = await Product.find({}, "title price variants").lean();
@@ -884,8 +916,6 @@ exports.getAllSubBarcodesWithProducts = async (req, res) => {
   }
 };
 
-
-
 let cache = {};
 
 exports.getProductsByCategory = async (req, res) => {
@@ -926,7 +956,6 @@ exports.getProductsByCategory = async (req, res) => {
     cache[key] = data;
 
     return res.json({ success: true, ...data });
-
   } catch (error) {
     console.error("Error in getProductsByCategory:", error);
     return res.status(500).json({
@@ -972,8 +1001,6 @@ exports.updateProductQuantity = async (req, res) => {
   }
 };
 
-
-
 // Get product by subBarcode
 // exports.getProductBySubBarcode = async (req, res) => {
 //   try {
@@ -1014,8 +1041,6 @@ exports.updateProductQuantity = async (req, res) => {
 //   }
 // };
 
-
-
 exports.getProductBySubBarcode = async (req, res, next) => {
   try {
     // Fetch all products without pagination
@@ -1038,5 +1063,3 @@ exports.getProductBySubBarcode = async (req, res, next) => {
     });
   }
 };
-
-
