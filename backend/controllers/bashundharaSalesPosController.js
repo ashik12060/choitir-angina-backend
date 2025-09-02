@@ -141,9 +141,77 @@ const BashundharaSalesPos = require("../models/bashundharaSalesPosModel");
 
 
 
+// exports.sellProductBashundhara = async (req, res) => {
+//   try {
+//     const {
+//       items,
+//       paymentMethod,
+//       discountAmount = 0,
+//       vatRate = 0,
+//       customerInfo,
+//       cardNumber,
+//     } = req.body;
+
+//     let totalPrice = 0;
+//     const saleItems = [];
+
+//     // ✅ Loop over items directly (no shop check)
+//     for (const { productId, variantId, quantity, subBarcode, title, size, color, price } of items) {
+//       const subtotal = price * quantity;
+//       totalPrice += subtotal;
+
+//       saleItems.push({
+//         productId,
+//         variantId,
+//         subBarcode,
+//         title,
+//         size,
+//         color,
+//         price,
+//         quantity,
+//         subtotal,
+//       });
+//     }
+
+//     // ✅ Calculate totals
+//     const totalAfterDiscount = totalPrice - discountAmount;
+//     const vatAmount = (totalAfterDiscount * vatRate) / 100;
+//     const netPayable = totalAfterDiscount + vatAmount;
+
+//     // ✅ Save sale
+//     const sale = new BashundharaSalesPos({
+//       products: saleItems,
+//       customerInfo,
+//       totalPrice,
+//       discountAmount,
+//       vatRate,
+//       vatAmount,
+//       netPayable,
+//       paymentMethod,
+//       ...(paymentMethod === "Card" && { cardNumber }),
+//     });
+
+//     await sale.save();
+
+//     res.json({
+//       message: "Bashundhara POS sale recorded successfully",
+//       sale,
+//       totalPrice,
+//       discountAmount,
+//       vatAmount,
+//       netPayable,
+//     });
+//   } catch (error) {
+//     console.error("Error in Bashundhara POS sale:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
 exports.sellProductBashundhara = async (req, res) => {
   try {
     const {
+      shop,                // ✅ must come from frontend
       items,
       paymentMethod,
       discountAmount = 0,
@@ -155,7 +223,7 @@ exports.sellProductBashundhara = async (req, res) => {
     let totalPrice = 0;
     const saleItems = [];
 
-    // ✅ Loop over items directly (no shop check)
+    // ✅ Loop over items
     for (const { productId, variantId, quantity, subBarcode, title, size, color, price } of items) {
       const subtotal = price * quantity;
       totalPrice += subtotal;
@@ -173,13 +241,17 @@ exports.sellProductBashundhara = async (req, res) => {
       });
     }
 
-    // ✅ Calculate totals
+    // ✅ Totals
     const totalAfterDiscount = totalPrice - discountAmount;
     const vatAmount = (totalAfterDiscount * vatRate) / 100;
     const netPayable = totalAfterDiscount + vatAmount;
 
+    // ✅ Normalize paymentMethod to lowercase
+    const normalizedPayment = paymentMethod?.toLowerCase();
+
     // ✅ Save sale
     const sale = new BashundharaSalesPos({
+      shop,  // required
       products: saleItems,
       customerInfo,
       totalPrice,
@@ -187,8 +259,8 @@ exports.sellProductBashundhara = async (req, res) => {
       vatRate,
       vatAmount,
       netPayable,
-      paymentMethod,
-      ...(paymentMethod === "Card" && { cardNumber }),
+      paymentMethod: normalizedPayment,
+      ...(normalizedPayment === "card" && { cardNumber }),
     });
 
     await sale.save();
