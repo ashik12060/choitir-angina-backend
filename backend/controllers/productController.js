@@ -430,6 +430,44 @@ exports.showSingleProduct = async (req, res, next) => {
     });
   }
 };
+// exports.showSingleProduct = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ success: false, message: "Invalid product ID" });
+//     }
+
+//     const product = await Product.findById(id)
+//       .populate("comments.postedBy", "name")
+//       .populate("brand", "brandName")
+//       .populate("supplier", "name")
+//       .populate("subcategory", "name");
+
+//     if (!product) {
+//       return res.status(404).json({ success: false, message: "Product not found" });
+//     }
+
+//     // Ensure all fields exist to avoid frontend crashes
+//     const safeProduct = {
+//       ...product.toObject(),
+//       brand: product.brand || null,
+//       supplier: product.supplier || null,
+//       subcategory: product.subcategory || null,
+//       categories: product.categories || [],
+//       variants: product.variants || [],
+//       barcode: product.barcode || "",
+//       barcodeNumber: product.barcodeNumber || "",
+//       priceHistory: product.priceHistory || [],
+//     };
+
+//     res.status(200).json({ success: true, product: safeProduct });
+//   } catch (error) {
+//     console.error("Error fetching product:", error);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
 
 exports.deleteProduct = async (req, res, next) => {
   try {
